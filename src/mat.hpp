@@ -24,6 +24,7 @@ public:
     bool is_scalar() const;
     float scalar_value() const;
     Tensor transpose() const;
+    Tensor matmul(Tensor x, Tensor y);
 };
 
 // elementwise operators

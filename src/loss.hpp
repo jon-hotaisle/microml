@@ -1,57 +1,38 @@
-#include <vector>
-#include <unordered_map>
-#include <string>
-#include <memory>
-#include <cmath>
+#pragma once
+
 #include <functional>
-#include <iostream>
-#include "prime.hpp"
 #include <limits>
+#include "prime.hpp"
 
-
-class CrossEntropyLoss {        
+class CrossEntropyLoss {
     private:
         ValuePtr target;
         ValuePtr pred;
         float eps;
 
     public:
-        CrossEntropyLoss(ValuePtr target, ValuePtr pred) {
-            this->target = target;
-            this->pred = pred;
-            this->eps = numeric_limits<float>::epsilon();
-        
-        }
+        CrossEntropyLoss(ValuePtr target, ValuePtr pred);
         ValuePtr forward();
-        float grad_calc_local();
-        function<void()> _backward;
+        float grad_calc_local() const;
 };
 
-class MSELoss {        
+class MSELoss {
     private:
         ValuePtr target;
         ValuePtr pred;
 
     public:
-        MSELoss(ValuePtr target, ValuePtr pred) {
-            this->target = target;
-            this->pred = pred;        
-        }
+        MSELoss(ValuePtr target, ValuePtr pred);
         ValuePtr forward();
-        float grad_calc_local();
-        function<void()> _backward;
+        float grad_calc_local() const;
 };
 
-
-class ReLU {        
+class ReLU {
     private:
         ValuePtr input;
 
     public:
-        ReLU(ValuePtr input) {
-            this->input = input;        
-        }
+        explicit ReLU(ValuePtr input);
         ValuePtr forward();
-        float grad_calc_local();
-        function<void()> _backward;
+        float grad_calc_local() const;
 };
