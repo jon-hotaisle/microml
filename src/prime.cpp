@@ -9,15 +9,23 @@
 #include <memory>
 
 
-Value::Value(float data, const string &op, size_t id)
-    : data(data), grad(0.0), op(op), id(id) {}
+Value::Value(float val, const string &op, size_t id): 
+    data(val), grad(0.0f), op(op), id(id)
+{}
 
-Value::~Value() {
-    --Value::currentID;
+Value::Value(const Tensor &t, const string &op, size_t id): 
+    data(t), grad(Tensor(0.0f)), op(op), id(id) 
+{}
+
+ValuePtr Value::create(float val, const std::string &op) {
+    return std::make_shared<Value>(val, op, currentID++);
 }
 
-ValuePtr Value::create(float data, const string& op) {
-    return make_shared<Value>(data, op, Value::currentID++);
+ValuePtr Value::create(const Tensor &t, const std::string &op) {
+    return std::make_shared<Value>(t, op, currentID++);
+}
+Value::~Value() {
+    --Value::currentID;
 }
 
 void Value::print(bool verbose, int depth) {
@@ -25,8 +33,8 @@ void Value::print(bool verbose, int depth) {
         cout << "     ";
     }
     
-    cout << "[data=" << data 
-              << ", grad=" << grad 
+    cout << "[data=" << data.scalar_value() 
+              << ", grad=" << grad.scalar_value()
               << ", op=" << op 
               << ", id=" << id 
               << "]\n";
@@ -41,93 +49,99 @@ void Value::print(bool verbose, int depth) {
 }
 
 float Value::get_val() {
-    return data;
+    return data.scalar_value();
 }
 
 void Value::set_val(float val) {
-    this->data = val;
+    data = Tensor(val);
 }
 
-void Value::set_prev(const vector<ValuePtr>& parents) {
-    this->prev = parents;
+void Value::set_prev(const std::vector<ValuePtr>& parents) {
+    prev = parents;
 }
 
-void Value::set_grad(float grad) {
-    this->grad = grad;
+void Value::set_grad(float g) {
+    grad = Tensor(g);
 }
 
 void Value::add_grad(float g) {
-    this->grad += g;
+    grad = grad + Tensor(g);
 }
 
 float Value::get_grad() {
-    return this->grad;
+    return grad.scalar_value();
 }
 
-
-string Value::get_op() {
+std::string Value::get_op() {
     return op;
 }
 
 ValuePtr Value::add(const ValuePtr& lhs, const ValuePtr& rhs) {
-    auto out = lhs->data + rhs->data;
+    Tensor out = lhs->data + rhs->data;
     auto node = Value::create(out, "+");
-    node->_backward = [lhs, rhs, node](){
-        lhs->grad += (float) 1 * node->grad;
-        rhs->grad += (float) 1 * node->grad;
+    node->set_prev({lhs, rhs});
+    node->_backward = [lhs, rhs, node]() {
+        float g = node->get_grad();
+        lhs->add_grad(g);
+        rhs->add_grad(g);
     };
-    node->set_prev(vector<ValuePtr>{lhs, rhs});
     return node;
 }
 
 ValuePtr Value::sub(const ValuePtr& lhs, const ValuePtr& rhs) {
-    auto out = lhs->data - rhs->data;
+    Tensor out = lhs->data - rhs->data;
     auto node = Value::create(out, "-");
-    node->_backward = [lhs, rhs, node](){
-        lhs->grad += (float) 1 * node->grad;
-        rhs->grad += (float) -1 * node->grad;
+    node->set_prev({lhs, rhs});
+    node->_backward = [lhs, rhs, node]() {
+        float g = node->get_grad();
+        lhs->add_grad(g);
+        rhs->add_grad(-g);
     };
-    node->set_prev(vector<ValuePtr>{lhs, rhs});
     return node;
 }
 
 ValuePtr Value::mult(const ValuePtr& lhs, const ValuePtr& rhs) {
-    auto out = lhs->data * rhs->data;
+    Tensor out = lhs->data * rhs->data;
     auto node = Value::create(out, "*");
-    node->_backward = [lhs, rhs, node](){
-        lhs->grad += rhs->get_val() * node->grad;
-        rhs->grad += lhs->get_val() * node->grad;
+    node->set_prev({lhs, rhs});
+    node->_backward = [lhs, rhs, node]() {
+        float g = node->get_grad();
+        lhs->add_grad(rhs->get_val() * g);
+        rhs->add_grad(lhs->get_val() * g);
     };
-    node->set_prev(vector<ValuePtr>{lhs, rhs});
     return node;
 }
 
 ValuePtr Value::exp(const ValuePtr& base, const ValuePtr& power) {
-    auto out = pow(base->data, power->data);
-    auto node = Value::create(out, "^");
-    node->_backward = [out, base, power, node](){
-        power->grad += (log(base->get_val()) * out) * node->grad;
-        base->grad += power->get_val() * (pow(base->get_val(), power->get_val()-1)) * node->grad;
+    float b = base->get_val();
+    float p = power->get_val();
+    float outv = std::pow(b, p);
+    auto node = Value::create(outv, "^");
+    node->set_prev({base, power});
+    node->_backward = [base, power, node, outv]() {
+        float g = node->get_grad();
+        float b = base->get_val();
+        float p = power->get_val();
+        base->add_grad(g * p * std::pow(b, p - 1));
+        power->add_grad(g * outv * std::log(b));
     };
-    node->set_prev(vector<ValuePtr>{base, power});
     return node;
 }
 
 ValuePtr Value::div(const ValuePtr& num, const ValuePtr& den) {
-    auto denom = Value::exp(den, Value::create(-1, ""));
-    auto node = Value::mult(num, denom);
-    node->set_prev(vector<ValuePtr>{num, denom});
-    return node;
+    auto inv = Value::exp(den, Value::create(-1.0f));
+    return Value::mult(num, inv);
 }
 
 ValuePtr Value::divp(const ValuePtr& num, const ValuePtr& den) {
-    auto out = num->get_val() / den->get_val();
-    auto node = Value::create(out, "/");
-    node->_backward = [num,den, node]() {
-        num->add_grad((1.0f / den->get_val())*node->get_grad());
-        den->add_grad((-num->get_val() / (den->get_val()*den->get_val()))*node->get_grad());
-    };
+    float outv = num->get_val() / den->get_val();
+    auto node = Value::create(outv, "/");
     node->set_prev({num, den});
+    node->_backward = [num, den, node]() {
+        float g = node->get_grad();
+        num->add_grad(g / den->get_val());
+        den->add_grad(-g * num->get_val() / (den->get_val() * den->get_val()));
+    };
     return node;
 }
 

@@ -79,8 +79,8 @@ int main() {
     // auto w = Value::create(0.0f, "w");    
     // auto b = Value::create(0.0f, "b");
 
-    // StochasticGD optim_w(0.01f, w);
-    // StochasticGD optim_b(0.01f, b);
+    // AdamW optim_w(0.01f, w);
+    // AdamW optim_b(0.01f, b);
     // ValuePtr epoch_loss;
 
     // int n_epochs = 10000;

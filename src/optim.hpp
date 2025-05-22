@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include "prime.hpp"
 
-class StochasticGD {
+class AdamW {
     private:
         float lr; 
         float b1;
@@ -22,7 +22,7 @@ class StochasticGD {
     
     public:
     
-        StochasticGD(float lr, ValuePtr param, float b1 = 0.9, float b2 = 0.999, float epsilon = 1e-8, float weight_decay=0.01) {
+        AdamW(float lr, ValuePtr param, float b1 = 0.9, float b2 = 0.999, float epsilon = 1e-8, float weight_decay=0.01) {
                 this->lr = lr;
                 this->b1 = b1;
                 this->b2 = b2;

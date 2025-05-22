@@ -9,7 +9,7 @@
 #include "prime.hpp"
 #include "optim.hpp"
 
-void StochasticGD::step() {
+void AdamW::step() {
     m_t = b1 * m_t + (1-b1) * param->get_grad();
     v_t = b2 * v_t + (1-b2) * pow((param->get_grad()), 2);
     t++;
