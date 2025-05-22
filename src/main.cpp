@@ -73,70 +73,70 @@ int main() {
     // return 0;
 
     // learning y = 2x weights
-    vector<float> xs = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
-    vector<float> ys = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
+    // vector<float> xs = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
+    // vector<float> ys = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
 
-    auto w = Value::create(0.0f, "w");    
-    auto b = Value::create(0.0f, "b");
+    // auto w = Value::create(0.0f, "w");    
+    // auto b = Value::create(0.0f, "b");
 
-    AdamW optim_w(0.01f, w);
-    AdamW optim_b(0.01f, b);
-    ValuePtr epoch_loss;
+    // AdamW optim_w(0.01f, w);
+    // AdamW optim_b(0.01f, b);
+    // ValuePtr epoch_loss;
 
-    int n_epochs = 10000;
+    // int n_epochs = 10000;
 
-    for (int epoch = 0; epoch < n_epochs; ++epoch) {
+    // for (int epoch = 0; epoch < n_epochs; ++epoch) {
 
-        // zero‐grad
-        w->set_grad(0.0f);
-        b->set_grad(0.0f);
-        epoch_loss = Value::create(0, "epoch");
+    //     // zero‐grad
+    //     w->set_grad(0.0f);
+    //     b->set_grad(0.0f);
+    //     epoch_loss = Value::create(0, "epoch");
 
-        for (size_t i = 0; i < xs.size(); ++i) {
-            auto x = xs[i];
-            auto y_true = ys[i];
+    //     for (size_t i = 0; i < xs.size(); ++i) {
+    //         auto x = xs[i];
+    //         auto y_true = ys[i];
 
-            auto x_val = Value::create(x, "x");
-            auto y_val = Value::create(y_true, "y");
+    //         auto x_val = Value::create(x, "x");
+    //         auto y_val = Value::create(y_true, "y");
 
-            auto lin = Value::add(Value::mult(w, x_val), b);
+    //         auto lin = Value::add(Value::mult(w, x_val), b);
 
-            MSELoss loss_fn(y_val, lin);
-            auto loss_i = loss_fn.forward();
+    //         MSELoss loss_fn(y_val, lin);
+    //         auto loss_i = loss_fn.forward();
 
-            epoch_loss = Value::add(epoch_loss, loss_i);
+    //         epoch_loss = Value::add(epoch_loss, loss_i);
         
-        }
+    //     }
         
-        auto invN = Value::create(1.0f / xs.size(), "invN"); // technically this is a scalar multiplication so no need to support division
-        epoch_loss = Value::mult(epoch_loss, invN);
+    //     auto invN = Value::create(1.0f / xs.size(), "invN"); // technically this is a scalar multiplication so no need to support division
+    //     epoch_loss = Value::mult(epoch_loss, invN);
 
-        epoch_loss->backward();
-        optim_w.step();
-        optim_b.step();
+    //     epoch_loss->backward();
+    //     optim_w.step();
+    //     optim_b.step();
 
-        if (epoch % 50 == 0) {
-            cout << "Epoch " << epoch
-                 << " loss=" << epoch_loss->get_val()
-                 << "  w=" << w->get_val()
-                 << "  b=" << b->get_val()
-                 << "\n";
-        }
+    //     if (epoch % 50 == 0) {
+    //         cout << "Epoch " << epoch
+    //              << " loss=" << epoch_loss->get_val()
+    //              << "  w=" << w->get_val()
+    //              << "  b=" << b->get_val()
+    //              << "\n";
+    //     }
 
-        if (epoch == n_epochs-1) {
-             epoch_loss->print();
-        }
-    }
+    //     if (epoch == n_epochs-1) {
+    //          epoch_loss->print();
+    //     }
+    // }
 
-    cout << "\nTrained model: y ≈ "
-         << w->get_val() << "·x + " << b->get_val() << "\n";
+    // cout << "\nTrained model: y ≈ "
+    //      << w->get_val() << "·x + " << b->get_val() << "\n";
 
-    vector<ValuePtr> topo;
-    unordered_set<Value*> visited;
-    epoch_loss->topo_sort(topo, visited);
-    epoch_loss->visualize(topo, "/Users/devpatel/Downloads/development/amd/cpp/microml/viz/graph");
+    // vector<ValuePtr> topo;
+    // unordered_set<Value*> visited;
+    // epoch_loss->topo_sort(topo, visited);
+    // epoch_loss->visualize(topo, "/Users/devpatel/Downloads/development/amd/cpp/microml/viz/graph");
    
-    return 0;
+    // return 0;
 
     // check operator overloading in native
     // auto a = Value::create(1.0f, "a");
@@ -169,7 +169,22 @@ int main() {
     // loss->topo_sort(topo, visited);
     // loss->visualize(topo, "/Users/devpatel/Downloads/development/amd/cpp/microml/viz/operator");
 
+
+    // check matrix operations
+
+    Tensor A = Tensor({1, 2, 3, 4, 5, 6}, {2, 3});
+    Tensor B = Tensor({7, 8, 9, 10, 11, 12}, {2, 3});
+    
+    B.print();
+    B = B.transpose();
+    B.print();
+    
+    auto C = Tensor::matmul(A, B);
+    cout << "Matmul completed successfully" << endl;
+
+    C.print();
     return 0;
+
 
 
 }
