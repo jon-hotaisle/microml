@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <unordered_set>
+#include <fstream> 
 
 Value::Value(float data, const string &op, size_t id)
     : data(data), grad(0.0), op(op), id(id) {}
@@ -132,6 +133,21 @@ void Value::topo_sort(vector<ValuePtr>& topo, unordered_set<Value*>& visited) {
         p->topo_sort(topo, visited);
     }
     topo.push_back(shared_from_this());
+}
+
+void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
+    ofstream out(filename);
+    out << "digraph ComputationalGraph {\n";
+    for (auto& node : topo) {
+        out << "  node" << node->id
+            << " [label=\"" << node->op << "\\nval=" << node->get_val()
+            << "\\ngrad=" << node->get_grad() << "\"];\n";
+        for (auto& parent : node->prev) {
+            out << "  node" << parent->id << " -> node" << node->id << ";\n";
+        }
+    }
+    out << "}\n";
+    out.close();
 }
 
 

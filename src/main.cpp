@@ -1,6 +1,7 @@
 #include "prime.hpp"
 #include "loss.hpp"
 #include "optim.hpp"
+using namespace std;
 
 int main() {
     
@@ -73,20 +74,23 @@ int main() {
 
     // learning y = 2x weights
     vector<float> xs = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
-    vector<float> ys = {0.0f, 1.942f, 3.51f, 6.315f, 8.0f};
+    vector<float> ys = {0.0f, 2.0f, 4.0f, 6.0f, 8.0f};
 
     auto w = Value::create(0.0f, "w");    
     auto b = Value::create(0.0f, "b");
 
     StochasticGD optim_w(0.01f, w);
     StochasticGD optim_b(0.01f, b);
+    ValuePtr epoch_loss;
 
-    for (int epoch = 0; epoch < 100000; ++epoch) {
+    int n_epochs = 10000;
+
+    for (int epoch = 0; epoch < n_epochs; ++epoch) {
 
         // zero‐grad
         w->set_grad(0.0f);
         b->set_grad(0.0f);
-        ValuePtr epoch_loss = nullptr;
+        epoch_loss = Value::create(0, "epoch");
 
         for (size_t i = 0; i < xs.size(); ++i) {
             auto x = xs[i];
@@ -100,11 +104,8 @@ int main() {
             MSELoss loss_fn(y_val, lin);
             auto loss_i = loss_fn.forward();
 
-            if (!epoch_loss) {
-                epoch_loss = loss_i;
-            } else {
-                epoch_loss = Value::add(epoch_loss, loss_i);
-            }
+            epoch_loss = Value::add(epoch_loss, loss_i);
+        
         }
         
         auto invN = Value::create(1.0f / xs.size(), "invN"); // technically this is a scalar multiplication so no need to support division
@@ -122,7 +123,7 @@ int main() {
                  << "\n";
         }
 
-        if (epoch == 4000-1) {
+        if (epoch == n_epochs-1) {
              epoch_loss->print();
         }
     }
@@ -130,6 +131,12 @@ int main() {
     cout << "\nTrained model: y ≈ "
          << w->get_val() << "·x + " << b->get_val() << "\n";
 
+    vector<ValuePtr> topo;
+    unordered_set<Value*> visited;
+    epoch_loss->topo_sort(topo, visited);
+    epoch_loss->dump_to_dot(topo, "/Users/devpatel/Downloads/development/amd/cpp/microml/viz/graph.dot");
+
+    system("dot -Tpng /Users/devpatel/Downloads/development/amd/cpp/microml/viz/graph.dot -o /Users/devpatel/Downloads/development/amd/cpp/microml/viz/graph.png");
    
     return 0;
 
