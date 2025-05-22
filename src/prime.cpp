@@ -4,6 +4,10 @@
 #include <cmath>
 #include <unordered_set>
 #include <fstream> 
+#include <vector>
+#include <string>
+#include <memory>
+
 
 Value::Value(float data, const string &op, size_t id)
     : data(data), grad(0.0), op(op), id(id) {}
@@ -109,6 +113,24 @@ ValuePtr Value::exp(const ValuePtr& base, const ValuePtr& power) {
     return node;
 }
 
+ValuePtr Value::div(const ValuePtr& num, const ValuePtr& den) {
+    auto denom = Value::exp(den, Value::create(-1, ""));
+    auto node = Value::mult(num, denom);
+    node->set_prev(vector<ValuePtr>{num, denom});
+    return node;
+}
+
+ValuePtr Value::divp(const ValuePtr& num, const ValuePtr& den) {
+    auto out = num->get_val() / den->get_val();
+    auto node = Value::create(out, "/");
+    node->_backward = [num,den, node]() {
+        num->add_grad((1.0f / den->get_val())*node->get_grad());
+        den->add_grad((-num->get_val() / (den->get_val()*den->get_val()))*node->get_grad());
+    };
+    node->set_prev({num, den});
+    return node;
+}
+
 
 void Value::backward() {
     vector<ValuePtr> topo;
@@ -150,4 +172,16 @@ void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
     out.close();
 }
 
-
+void Value::visualize(const vector<ValuePtr>& topo, const string& base_path) {
+    string dotfile = base_path + ".dot";
+    string pngfile = base_path + ".png";
+    dump_to_dot(topo, dotfile);
+    std::string cmd = "dot -Tpng " + dotfile + " -o " + pngfile;
+    std::cout << "Running: " << cmd << "\n";
+    int ret = std::system(cmd.c_str());
+    if (ret != 0) {
+        std::cerr << "Error: dot command failed with code " << ret << "\n";
+    } else {
+        std::cout << "Graph written to " << pngfile << "\n";
+    }
+}
