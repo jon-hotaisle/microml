@@ -1,6 +1,6 @@
 ### ML Compiler from Scratch in C++ [WORK IN PROGRESS]
 
-- [Current] Micrograd Scalar Backprop and Layers
+- [Current] Micrograd Scalar Backprop and Layers w. Toposort
 - [Next Steps]
     - Vector and Matrix Support
     - Operator Fusion 
