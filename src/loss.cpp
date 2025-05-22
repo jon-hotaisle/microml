@@ -20,20 +20,48 @@ float CrossEntropyLoss::grad_calc_local() {
 }
 
 ValuePtr CrossEntropyLoss::forward() {
-    float t = target -> get_val();
-    float p = pred -> get_val();
-    float loss_val = - (t*log(p+eps) + (1-t) * (log(1-p + eps)));
+    float t = target->get_val();
+    float p = pred->get_val();
+    float loss_val = - (t * log(p + eps)+(1 - t)*log(1 - p + eps));
+
     auto loss_node = Value::create(loss_val, "bce");
-    loss_node->_backward = [loss_node, this]() {
-        float grad = grad_calc_local();
-        pred->add_grad(grad * loss_node->get_grad());
+    ValuePtr T = target, P = pred, L = loss_node;
+    float eps = this->eps;  
+    loss_node->_backward = [T, P, L, eps]() {
+        float t = T->get_val();
+        float p = P->get_val();
+        float grad_local = (-t/(p+eps)) + ((1-t)/(1-p+eps));
+        P->add_grad(grad_local * L->get_grad());
     };
+
 
     loss_node->set_prev(vector<ValuePtr>{target, pred});
     
     return loss_node;
 }
 
+
+float MSELoss::grad_calc_local() {
+    float t = target -> get_val();
+    float p = pred -> get_val(); 
+    float grad = 2*(p-t);
+    return grad;
+}
+
+ValuePtr MSELoss::forward() {
+    float t = target -> get_val();
+    float p = pred -> get_val();
+    float loss_val = pow(p-t, 2);
+    auto loss_node = Value::create(loss_val, "mse");
+    ValuePtr T = target, P = pred, L = loss_node;
+    loss_node->_backward = [T, P, L]() {
+        float grad_local = 2.0f * (P->get_val() - T->get_val());
+        P->add_grad(grad_local * L->get_grad());
+    };
+    loss_node->set_prev(vector<ValuePtr>{target, pred});
+    
+    return loss_node;
+}
 
 
 float ReLU::grad_calc_local() {

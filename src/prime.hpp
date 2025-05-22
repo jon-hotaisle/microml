@@ -32,6 +32,7 @@ public:
     void print(bool verbose = true, int depth = 0);
 
     float get_val();
+    void set_val(float val);
     void set_prev(const vector<ValuePtr>& parents);
     void set_grad(float grad);
     std::string get_op();
@@ -43,6 +44,7 @@ public:
     static ValuePtr add(const ValuePtr& lhs, const ValuePtr& rhs);
     static ValuePtr sub(const ValuePtr& lhs, const ValuePtr& rhs);
     static ValuePtr mult(const ValuePtr& lhs, const ValuePtr& rhs);
+    static ValuePtr exp(const ValuePtr& base, const ValuePtr& power);
     function<void()> _backward;
     void backward();
 };

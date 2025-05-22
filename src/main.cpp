@@ -1,5 +1,6 @@
 #include "prime.hpp"
 #include "loss.hpp"
+#include "optim.hpp"
 
 int main() {
     
@@ -41,32 +42,96 @@ int main() {
     // return 0;
 
     // 2 layer with residual connection
-    auto x      = Value::create(1.0f, "x");   // input feature
-    auto y_true = Value::create(1.0f, "y");   // target (binary)
+    // auto x      = Value::create(1.0f, "x");   // input feature
+    // auto y_true = Value::create(1.0f, "y");   // target (binary)
 
-    auto w1 = Value::create(0.5f, "w1");
-    auto b1 = Value::create(0.1f, "b1");
+    // auto w1 = Value::create(0.5f, "w1");
+    // auto b1 = Value::create(0.1f, "b1");
 
-    auto w2 = Value::create(0.8f, "w2");
-    auto b2 = Value::create(0.2f, "b2");
+    // auto w2 = Value::create(0.8f, "w2");
+    // auto b2 = Value::create(0.2f, "b2");
 
-    auto z1 = Value::add(Value::mult(w1, x), b1);
-    ReLU relu1(z1);
-    auto h1 = relu1.forward();               
-    auto z2 = Value::add(Value::mult(w2, h1), b2);
-    auto res = Value::add(z2, h1);
+    // auto z1 = Value::add(Value::mult(w1, x), b1);
+    // ReLU relu1(z1);
+    // auto h1 = relu1.forward();               
+    // auto z2 = Value::add(Value::mult(w2, h1), b2);
+    // auto res = Value::add(z2, h1);
 
-    ReLU relu2(res);
-    auto y_pred = relu2.forward();            
+    // ReLU relu2(res);
+    // auto y_pred = relu2.forward();            
 
-    CrossEntropyLoss loss(y_true, y_pred);
-    auto final_loss = loss.forward();
+    // CrossEntropyLoss loss(y_true, y_pred);
+    // auto final_loss = loss.forward();
 
-    std::cout << "Final Loss = " << final_loss->get_val() << "\n\n";
+    // std::cout << "Final Loss = " << final_loss->get_val() << "\n\n";
 
-    final_loss->backward();
-    std::cout << "Computation Graph:\n";
-    final_loss->print(true);
+    // final_loss->backward();
+    // std::cout << "Computation Graph:\n";
+    // final_loss->print(true);
 
+    // return 0;
+
+    // learning y = 2x weights
+    vector<float> xs = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
+    vector<float> ys = {0.0f, 1.942f, 3.51f, 6.315f, 8.0f};
+
+    auto w = Value::create(0.0f, "w");    
+    auto b = Value::create(0.0f, "b");
+
+    StochasticGD optim_w(0.01f, w);
+    StochasticGD optim_b(0.01f, b);
+
+    for (int epoch = 0; epoch < 100000; ++epoch) {
+
+        // zero‐grad
+        w->set_grad(0.0f);
+        b->set_grad(0.0f);
+        ValuePtr epoch_loss = nullptr;
+
+        for (size_t i = 0; i < xs.size(); ++i) {
+            auto x = xs[i];
+            auto y_true = ys[i];
+
+            auto x_val = Value::create(x, "x");
+            auto y_val = Value::create(y_true, "y");
+
+            auto lin = Value::add(Value::mult(w, x_val), b);
+
+            MSELoss loss_fn(y_val, lin);
+            auto loss_i = loss_fn.forward();
+
+            if (!epoch_loss) {
+                epoch_loss = loss_i;
+            } else {
+                epoch_loss = Value::add(epoch_loss, loss_i);
+            }
+        }
+        
+        auto invN = Value::create(1.0f / xs.size(), "invN"); // technically this is a scalar multiplication so no need to support division
+        epoch_loss = Value::mult(epoch_loss, invN);
+
+        epoch_loss->backward();
+        optim_w.step();
+        optim_b.step();
+
+        if (epoch % 50 == 0) {
+            cout << "Epoch " << epoch
+                 << " loss=" << epoch_loss->get_val()
+                 << "  w=" << w->get_val()
+                 << "  b=" << b->get_val()
+                 << "\n";
+        }
+
+        if (epoch == 4000-1) {
+             epoch_loss->print();
+        }
+    }
+
+    cout << "\nTrained model: y ≈ "
+         << w->get_val() << "·x + " << b->get_val() << "\n";
+
+   
     return 0;
+
+
 }

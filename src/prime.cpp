@@ -39,6 +39,10 @@ float Value::get_val() {
     return data;
 }
 
+void Value::set_val(float val) {
+    this->data = val;
+}
+
 void Value::set_prev(const vector<ValuePtr>& parents) {
     this->prev = parents;
 }
@@ -90,6 +94,17 @@ ValuePtr Value::mult(const ValuePtr& lhs, const ValuePtr& rhs) {
         rhs->grad += lhs->get_val() * node->grad;
     };
     node->set_prev(vector<ValuePtr>{lhs, rhs});
+    return node;
+}
+
+ValuePtr Value::exp(const ValuePtr& base, const ValuePtr& power) {
+    auto out = pow(base->data, power->data);
+    auto node = Value::create(out, "^");
+    node->_backward = [out, base, power, node](){
+        power->grad += (log(base->get_val()) * out) * node->grad;
+        base->grad += power->get_val() * (pow(base->get_val(), power->get_val()-1)) * node->grad;
+    };
+    node->set_prev(vector<ValuePtr>{base, power});
     return node;
 }
 
