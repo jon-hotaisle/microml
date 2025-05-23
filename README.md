@@ -17,7 +17,7 @@
 
 MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies. 
 
-## 🏗️ Architecture & Design
+## Architecture & Design
 
 ```
             ┌────────────────────┐
@@ -54,12 +54,12 @@ MicroML is a lightweight neural network framework that demonstrates core deep le
     └─────────────────────────────────┘
 ```
 
-> **Core Components:**
-> - **Value**: Computational graph node holding data, gradient, operation tag, and adjacency list
-> - **Tensor**: N-D array with shape, strides, and raw buffer enabling broadcast and matrix operations  
-> - **Graph**: Built dynamically on operator calls, finalized by fast topological sort for minimal overhead
+**Core Components:**
+- **Value**: Computational graph node holding data, gradient, operation tag, and adjacency list
+- **Tensor**: N-D array with shape, strides, and raw buffer enabling broadcast and matrix operations  
+- **Graph**: Built dynamically on operator calls, finalized by fast topological sort for minimal overhead
 
-## ⭐ Core Features
+## Core Features
 
 ### 🔄 Automatic Differentiation
 - **Computational Graph Construction**: Dynamic graph building with topological sorting for proper gradient flow
@@ -83,7 +83,7 @@ MicroML is a lightweight neural network framework that demonstrates core deep le
 - **End-to-End Training**: Complete workflows for binary classification, multi-class CE, MSE regression
 - **Gradient Accumulation**: Proper gradient handling and momentum across training batches
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 ### Computational Graph Engine
 ```cpp
@@ -115,7 +115,7 @@ for (k; k + simd_size <= m; k += simd_size) {
 }
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 microml/
@@ -136,13 +136,13 @@ microml/
 └── README.md
 ```
 
-## 📦 Dependencies
+## Dependencies
 
 - **xsimd**: SIMD-accelerated tensor operations (AVX2/FMA)
 - **C++20**: Modern C++ features for clean memory management
 - **Graphviz**: Optional, for computational graph visualization
 
-## 🎯 Examples & Results
+## Examples & Results
 
 The framework demonstrates learning on synthetic datasets:
 
@@ -174,7 +174,7 @@ The framework generates computation graph visualizations showing gradient flow t
 
 These visualizations demonstrate the topological sort and automatic differentiation process, making the gradient flow transparent for educational purposes.
 
-## 🎓 Key Learning Outcomes
+## Key Learning Outcomes
 
 This was an incredibly fun project to build that got me deep into the weeds of C++ and creating a powerful API for ML:
 
@@ -185,7 +185,7 @@ This was an incredibly fun project to build that got me deep into the weeds of C
 - **Optimization Theory**: How adaptive learning rates and momentum work in practice
 - **Software Architecture**: Designing modular, extensible ML components
 
-## 🚀 Build & Run
+## Build & Run
 
 ```bash
 # Clone with xsimd submodule for SIMD operations
@@ -201,7 +201,7 @@ g++ -std=c++20 -O3 -march=native -mavx2 -mfma \
 ./microml
 ```
 
-## 📊 Performance Benchmarks
+## Performance Benchmarks
 
 Training performance comparison between SIMD-optimized and naive matrix multiplication:
 - **SIMD Vectorization**: Matrix operations leverage AVX2/FMA instructions
@@ -230,7 +230,7 @@ Training performance comparison between SIMD-optimized and naive matrix multipli
 - Training time reduced from **4.7 minutes** to **32 seconds** - making experimentation much more interactive
 - Performance scales well across different problem complexities (4-feature vs 2-feature datasets)
 
-## 🔮 Limitations & Future Work
+## Limitations & Future Work
 
 **Current Limitations:**
 - Single-threaded execution (except vectorized matmul)
@@ -245,21 +245,19 @@ Training performance comparison between SIMD-optimized and naive matrix multipli
 - Advanced optimizers and learning rate schedules
 - Python bindings for rapid prototyping
 
-## 💡 Inspiration
+## Inspiration
 
 This project was inspired by:
 - [micrograd](https://github.com/karpathy/micrograd) by Andrej Karpathy
 - Understanding PyTorch's autograd system
 - Implementing the math behind neural networks from scratch
 
-## 🤝 Contributing
+## Contributing
 
 This is primarily an educational project, but suggestions and improvements are welcome! The code prioritizes clarity and learning over performance.
 
 ---
 
-<div align="center">
-
-**Built with ❤️ by *devpatelio* 🚀**
+*devpatelio* 🚀 
 
 </div>
