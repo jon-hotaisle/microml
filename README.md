@@ -252,10 +252,6 @@ This project was inspired by:
 - Understanding PyTorch's autograd system
 - Implementing the math behind neural networks from scratch
 
-## Contributing
-
-This is primarily an educational project, but suggestions and improvements are welcome! The code prioritizes clarity and learning over performance.
-
 ---
 
 *devpatelio* 🚀 
