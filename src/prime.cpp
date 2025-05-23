@@ -210,36 +210,180 @@ void Value::set_tensor(const Tensor& t) {
 }
 
 void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
-    auto tensor_to_string = [](const Tensor& t) {
+    // auto tensor_to_string = [](const Tensor& t) {
+    //     std::ostringstream oss;
+    //     oss << "[";
+    //     for (size_t i = 0; i < t.data.size(); ++i) {
+    //         oss << t.data[i];
+    //         if (i + 1 < t.data.size()) oss << ",";
+    //     }
+    //     oss << "]";
+    //     return oss.str();
+    // };
+
+
+    // ofstream out(filename);
+    // out << "digraph ComputationalGraph {\n";
+    // for (auto& node : topo) {
+    //     const Tensor& val_t  = node->get_tensor();
+    //     const Tensor& grad_t = node->get_tensor_grad();
+    //     std::string val_str  = tensor_to_string(val_t);
+    //     std::string grad_str = tensor_to_string(grad_t);
+
+    //     out << "  node" << node->id
+    //         << " [label=\"" << node->op
+    //         << "\\nval="  << val_str
+    //         << "\\ngrad=" << grad_str << "\"];\n";
+
+    //     for (auto& parent : node->prev) {
+    //         out << "  node" << parent->id
+    //             << " -> node" << node->id << ";\n";
+    //     }
+    // }
+    // out << "}\n";
+    // out.close();
+
+    // AI-Generated Prettier Version of my Prior Graph Code 
+    auto tensor_to_string = [](const Tensor& t, int max_elements = 3) {
         std::ostringstream oss;
-        oss << "[";
-        for (size_t i = 0; i < t.data.size(); ++i) {
-            oss << t.data[i];
-            if (i + 1 < t.data.size()) oss << ",";
+        if (t.is_scalar()) {
+            oss << std::fixed << std::setprecision(3) << t.scalar_value();
+        } else {
+            oss << "[";
+            size_t elements_to_show = std::min((size_t)max_elements, t.data.size());
+            for (size_t i = 0; i < elements_to_show; ++i) {
+                oss << std::fixed << std::setprecision(3) << t.data[i];
+                if (i + 1 < elements_to_show) oss << ", ";
+            }
+            if (t.data.size() > max_elements) {
+                oss << "...";
+            }
+            oss << "]";
         }
-        oss << "]";
         return oss.str();
     };
 
+    auto get_node_color = [](const string& op) {
+        if (op == "matmul") return "lightblue";
+        if (op == "+" || op == "-") return "lightgreen";
+        if (op == "*" || op == "/") return "lightyellow";
+        if (op == "relu") return "lightcoral";
+        if (op == "sigmoid") return "lightpink";
+        if (op == "bce" || op == "cross_entropy") return "orange";
+        if (op == "mse") return "lightgray";
+        if (op.empty() || op.find("W") != string::npos || op.find("b") != string::npos) return "lightsteelblue";
+        return "white";
+    };
+
+    auto get_node_shape = [](const string& op) {
+        if (op == "bce" || op == "cross_entropy" || op == "mse") return "diamond";
+        if (op == "relu" || op == "sigmoid") return "ellipse";
+        if (op == "matmul") return "box";
+        if (op.empty() || op.find("W") != string::npos || op.find("b") != string::npos) return "circle";
+        return "box";
+    };
+
+    auto escape_string = [](const string& str) {
+        string result = str;
+        size_t pos = 0;
+        while ((pos = result.find("\"", pos)) != string::npos) {
+            result.replace(pos, 1, "\\\"");
+            pos += 2;
+        }
+        return result;
+    };
 
     ofstream out(filename);
+    
     out << "digraph ComputationalGraph {\n";
+    out << "  // Graph styling\n";
+    out << "  rankdir=TB;\n"; 
+    out << "  bgcolor=\"white\";\n";
+    out << "  node [fontname=\"Arial\", fontsize=10, margin=0.1];\n";
+    out << "  edge [fontname=\"Arial\", fontsize=8, color=\"#333333\"];\n";
+    out << "  \n";
+    
+    out << "  // Parameter nodes\n";
     for (auto& node : topo) {
-        const Tensor& val_t  = node->get_tensor();
-        const Tensor& grad_t = node->get_tensor_grad();
-        std::string val_str  = tensor_to_string(val_t);
-        std::string grad_str = tensor_to_string(grad_t);
-
-        out << "  node" << node->id
-            << " [label=\"" << node->op
-            << "\\nval="  << val_str
-            << "\\ngrad=" << grad_str << "\"];\n";
-
-        for (auto& parent : node->prev) {
-            out << "  node" << parent->id
-                << " -> node" << node->id << ";\n";
+        if (node->op.empty() || node->op.find("W") != string::npos || 
+            node->op.find("b") != string::npos || node->op == "x" || node->op == "target") {
+            
+            string val_str = tensor_to_string(node->get_tensor());
+            string grad_str = tensor_to_string(node->get_tensor_grad());
+            string color = get_node_color(node->op);
+            string shape = get_node_shape(node->op);
+            
+            out << "  node" << node->id
+                << " [label=\"" << escape_string(node->op)
+                << "\\nval=" << escape_string(val_str)
+                << "\\ngrad=" << escape_string(grad_str) 
+                << "\", fillcolor=\"" << color 
+                << "\", style=\"filled\", shape=\"" << shape << "\"];\n";
         }
     }
+    
+    out << "  \n  // Operation nodes\n";
+    for (auto& node : topo) {
+        if (!(node->op.empty() || node->op.find("W") != string::npos || 
+              node->op.find("b") != string::npos || node->op == "x" || node->op == "target")) {
+            
+            string val_str = tensor_to_string(node->get_tensor());
+            string grad_str = tensor_to_string(node->get_tensor_grad());
+            string color = get_node_color(node->op);
+            string shape = get_node_shape(node->op);
+            
+            string label;
+            if (node->op == "bce" || node->op == "cross_entropy" || node->op == "mse") {
+                label = "LOSS\\n" + escape_string(node->op) + "\\n" + escape_string(val_str);
+            } else {
+                label = escape_string(node->op) + "\\nval=" + escape_string(val_str) + 
+                       "\\ngrad=" + escape_string(grad_str);
+            }
+            
+            out << "  node" << node->id
+                << " [label=\"" << label
+                << "\", fillcolor=\"" << color 
+                << "\", style=\"filled\", shape=\"" << shape << "\"];\n";
+        }
+    }
+    
+    out << "  \n  // Edges\n";
+    for (auto& node : topo) {
+        for (auto& parent : node->prev) {
+            string edge_style = "solid";
+            string edge_color = "#333333";
+            
+            if (node->op == "matmul") {
+                edge_color = "#0066CC";
+                edge_style = "bold";
+            } else if (node->op == "bce" || node->op == "cross_entropy" || node->op == "mse") {
+                edge_color = "#CC3300";
+                edge_style = "bold";
+            } else if (node->op == "relu" || node->op == "sigmoid") {
+                edge_color = "#006600";
+            }
+            
+            out << "  node" << parent->id
+                << " -> node" << node->id 
+                << " [color=\"" << edge_color << "\", style=\"" << edge_style << "\"];\n";
+        }
+    }
+    
+    out << "  \n  // Legend\n";
+    out << "  subgraph cluster_legend {\n";
+    out << "    label=\"Legend\";\n";
+    out << "    style=\"filled\";\n";
+    out << "    fillcolor=\"#f0f0f0\";\n";
+    out << "    fontsize=8;\n";
+    out << "    \n";
+    out << "    legend_param [label=\"Parameters\", fillcolor=\"lightsteelblue\", style=\"filled\", shape=\"circle\"];\n";
+    out << "    legend_matmul [label=\"Matrix Ops\", fillcolor=\"lightblue\", style=\"filled\", shape=\"box\"];\n";
+    out << "    legend_activation [label=\"Activations\", fillcolor=\"lightcoral\", style=\"filled\", shape=\"ellipse\"];\n";
+    out << "    legend_loss [label=\"Loss\", fillcolor=\"orange\", style=\"filled\", shape=\"diamond\"];\n";
+    out << "    \n";
+    out << "    legend_param -> legend_matmul -> legend_activation -> legend_loss [style=\"invis\"];\n";
+    out << "  }\n";
+    
     out << "}\n";
     out.close();
 

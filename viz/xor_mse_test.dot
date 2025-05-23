@@ -1,37 +1,63 @@
 digraph ComputationalGraph {
-  node6724022 [label="target\nval=[0]\ngrad=[0]"];
-  node6724012 [label="x\nval=[-0.709329,-0.248475]\ngrad=[0.00354043,0.0040707]"];
-  node4564018 [label="W1\nval=[0.61103,1.93106,1.95576,2.86475,0.763141,-0.250159,0.702548,-0.0818209,0.008909,1.80219,1.72161,2.10433]\ngrad=[-0.034095,-0.649717,-0.334112,-0.204029,-0.304982,0.0226878,0.0326575,-0.0752477,-0.0455769,-0.443692,-1.00838,-0.96282]"];
-  node6724013 [label="matmul\nval=[-0.607987,-1.34943,-1.38949,-2.47985,-0.969096,-0.345427]\ngrad=[0.0057942,0,0,0,0,0]"];
-  node6724012 -> node6724013;
-  node4564018 -> node6724013;
-  node4564019 [label="b1\nval=[0.888634,0.238401,0.661691,-0.185601,0.0775675,0.0414302]\ngrad=[-0.0949631,0.133059,-0.0728492,0.0677269,-0.0378413,0.0316787]"];
-  node6724014 [label="+\nval=[0.280647,-1.11103,-0.727801,-2.66545,-0.891529,-0.303997]\ngrad=[0.0057942,0,0,0,0,0]"];
-  node6724013 -> node6724014;
-  node4564019 -> node6724014;
-  node6724015 [label="relu\nval=[0.280647,0,0,0,0,0]\ngrad=[0.0057942,-0.005016,-0.000514076,-0.00874859,-0.00519218,0.0095959]"];
-  node6724014 -> node6724015;
-  node4564020 [label="W2\nval=[0.209011,-0.810492,1.30474,1.13093,-1.64684,-0.188803,-2.79846,0.485926,0.142462,-1.43758,-0.929757,2.15709,0.670827,0.813249,-1.41052,-1.32685,2.01662,-1.77119,0.551125,-1.303,-0.355733,-1.83716,1.42517,2.42053]\ngrad=[-0.157694,0,-0.111871,0.0854574,0.564756,0,0.0450635,-0.330493,0.609726,0,0.0136565,-0.359844,-0.86575,0,0.116136,0.491468,-0.674289,0,-0.205278,0.382816,0.422527,0,-0.911538,-0.240051]"];
-  node6724016 [label="matmul\nval=[0.0586583,-0.227462,0.366173,0.317392]\ngrad=[-0.00259914,0,0.00357819,0.00147562]"];
-  node6724015 -> node6724016;
-  node4564020 -> node6724016;
-  node4564021 [label="b2\nval=[1.08132,0,-0.347005,-0.274049]\ngrad=[-0.577289,0,0.373027,0.157742]"];
-  node6724017 [label="+\nval=[1.13998,-0.227462,0.0191678,0.0433431]\ngrad=[-0.00259914,0,0.00357819,0.00147562]"];
-  node6724016 -> node6724017;
-  node4564021 -> node6724017;
-  node6724018 [label="relu\nval=[1.13998,0,0.0191678,0.0433431]\ngrad=[-0.00259914,-0.000792604,0.00357819,0.00147562]"];
-  node6724017 -> node6724018;
-  node4564022 [label="W3\nval=[-2.82799,-0.862391,3.89324,1.60555]\ngrad=[1.2699,0,-0.511206,-1.62895]"];
-  node6724019 [label="matmul\nval=[-3.07963]\ngrad=[0.000919077]"];
-  node6724018 -> node6724019;
-  node4564022 -> node6724019;
-  node4564023 [label="b3\nval=[-0.730147]\ngrad=[0.196636]"];
-  node6724020 [label="+\nval=[-3.80978]\ngrad=[0.000919077]"];
-  node6724019 -> node6724020;
-  node4564023 -> node6724020;
-  node6724021 [label="sigmoid\nval=[0.021673]\ngrad=[0.043346]"];
-  node6724020 -> node6724021;
-  node6724023 [label="mse\nval=[0.000469719]\ngrad=[1]"];
-  node6724022 -> node6724023;
-  node6724021 -> node6724023;
+  // Graph styling
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=10, margin=0.1];
+  edge [fontname="Arial", fontsize=8, color="#333333"];
+  
+  // Parameter nodes
+  node6724022 [label="target\nval=[0.000]\ngrad=0.000", fillcolor="white", style="filled", shape="box"];
+  node6724012 [label="x\nval=[-0.709, -0.248]\ngrad=[-0.000, 0.000]", fillcolor="white", style="filled", shape="box"];
+  node4564018 [label="W1\nval=[0.121, -1.302, 1.984...]\ngrad=[-0.348, 0.435, -0.768...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node4564019 [label="b1\nval=[0.605, 0.841, 0.723...]\ngrad=[0.533, -0.015, -0.158...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node4564020 [label="W2\nval=[0.441, -2.878, -1.364...]\ngrad=[-0.256, 0.186, 1.090...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node4564021 [label="b2\nval=[-0.116, 1.182, 0.271...]\ngrad=[-0.486, -0.235, -0.353...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node4564022 [label="W3\nval=[2.878, -2.278, 1.457...]\ngrad=[-0.827, 0.823, -3.531...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node4564023 [label="b3\nval=[-1.840]\ngrad=[2.951]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  
+  // Operation nodes
+  node6724013 [label="matmul\nval=[-0.830, 0.581, -1.427...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightblue", style="filled", shape="box"];
+  node6724014 [label="+\nval=[-0.225, 1.422, -0.704...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightgreen", style="filled", shape="box"];
+  node6724015 [label="relu\nval=[0.000, 1.422, 0.000...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightcoral", style="filled", shape="ellipse"];
+  node6724016 [label="matmul\nval=[1.325, 1.884, -0.102...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightblue", style="filled", shape="box"];
+  node6724017 [label="+\nval=[1.209, 3.067, 0.169...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightgreen", style="filled", shape="box"];
+  node6724018 [label="relu\nval=[1.209, 3.067, 0.169...]\ngrad=[0.000, -0.000, 0.000...]", fillcolor="lightcoral", style="filled", shape="ellipse"];
+  node6724019 [label="matmul\nval=[-3.259]\ngrad=[0.000]", fillcolor="lightblue", style="filled", shape="box"];
+  node6724020 [label="+\nval=[-5.098]\ngrad=[0.000]", fillcolor="lightgreen", style="filled", shape="box"];
+  node6724021 [label="sigmoid\nval=[0.006]\ngrad=[0.012]", fillcolor="lightpink", style="filled", shape="ellipse"];
+  node6724023 [label="LOSS\nmse\n0.000", fillcolor="lightgray", style="filled", shape="diamond"];
+  
+  // Edges
+  node6724012 -> node6724013 [color="#0066CC", style="bold"];
+  node4564018 -> node6724013 [color="#0066CC", style="bold"];
+  node6724013 -> node6724014 [color="#333333", style="solid"];
+  node4564019 -> node6724014 [color="#333333", style="solid"];
+  node6724014 -> node6724015 [color="#006600", style="solid"];
+  node6724015 -> node6724016 [color="#0066CC", style="bold"];
+  node4564020 -> node6724016 [color="#0066CC", style="bold"];
+  node6724016 -> node6724017 [color="#333333", style="solid"];
+  node4564021 -> node6724017 [color="#333333", style="solid"];
+  node6724017 -> node6724018 [color="#006600", style="solid"];
+  node6724018 -> node6724019 [color="#0066CC", style="bold"];
+  node4564022 -> node6724019 [color="#0066CC", style="bold"];
+  node6724019 -> node6724020 [color="#333333", style="solid"];
+  node4564023 -> node6724020 [color="#333333", style="solid"];
+  node6724020 -> node6724021 [color="#006600", style="solid"];
+  node6724022 -> node6724023 [color="#CC3300", style="bold"];
+  node6724021 -> node6724023 [color="#CC3300", style="bold"];
+  
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    style="filled";
+    fillcolor="#f0f0f0";
+    fontsize=8;
+    
+    legend_param [label="Parameters", fillcolor="lightsteelblue", style="filled", shape="circle"];
+    legend_matmul [label="Matrix Ops", fillcolor="lightblue", style="filled", shape="box"];
+    legend_activation [label="Activations", fillcolor="lightcoral", style="filled", shape="ellipse"];
+    legend_loss [label="Loss", fillcolor="orange", style="filled", shape="diamond"];
+    
+    legend_param -> legend_matmul -> legend_activation -> legend_loss [style="invis"];
+  }
 }

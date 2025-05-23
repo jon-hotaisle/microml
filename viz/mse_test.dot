@@ -1,37 +1,63 @@
 digraph ComputationalGraph {
-  node2401010 [label="target\nval=[1]\ngrad=[0]"];
-  node2401000 [label="x\nval=[0.479547,0.939431,0.728789,-1.57669]\ngrad=[-3.63452e-08,-2.84402e-08,3.15253e-08,1.54528e-08]"];
-  node1201006 [label="W1\nval=[1.09348,0.46435,0.881771,-0.305824,1.13709,-0.625315,-1.23631,0.454022,0.915725,1.1619,0.50969,-0.645655,0.693947,-1.00725,-0.484421,-1.22026,-0.691023,-0.594142,-0.875001,-1.56794,-0.0646808,1.05637,0.612316,0.440904,-1.10767,-0.727714,0.0849658,-0.859216,1.13129,1.63643,0.442573,0.143505]\ngrad=[-0.624597,-0.37519,-0.0379996,0.103203,-0.0668438,0.48167,0.231087,-0.0379319,-0.126572,-0.046925,-0.186729,-0.0124425,0.0659023,0.0448771,0.308584,-0.0551114,0.23137,0.13266,0.342793,0.0649976,-0.0725075,-0.0916136,0.0669156,-0.0198078,0.170695,-0.10459,0.139481,0.14475,0.0242691,-0.098891,-0.194863,-0.23092]"];
-  node2401001 [label="matmul\nval=[2.62748,2.02858,0.130014,-0.541183,-0.633639,-3.05637,-1.2995,-0.833566]\ngrad=[-1.29469e-08,-4.20718e-09,-2.29475e-08,0,0,0,0,0]"];
-  node2401000 -> node2401001;
-  node1201006 -> node2401001;
-  node1201007 [label="b1\nval=[0.63031,0.0831617,0.64402,0.196235,-0.312284,0.722167,0.663937,-0.191412]\ngrad=[0.220024,0.093287,-0.379077,-0.0319998,0.126237,0.0445009,-0.0811903,0.131362]"];
-  node2401002 [label="+\nval=[3.25779,2.11174,0.774034,-0.344948,-0.945923,-2.33421,-0.635562,-1.02498]\ngrad=[-1.29469e-08,-4.20718e-09,-2.29475e-08,0,0,0,0,0]"];
-  node2401001 -> node2401002;
-  node1201007 -> node2401002;
-  node2401003 [label="relu\nval=[3.25779,2.11174,0.774034,0,0,0,0,0]\ngrad=[-1.29469e-08,-4.20718e-09,-2.29475e-08,-5.15441e-09,-8.90403e-10,1.15689e-08,3.04117e-09,3.16026e-09]"];
-  node2401002 -> node2401003;
-  node1201008 [label="W2\nval=[0.968072,-0.153311,-1.08272,-1.47521,0.314581,-0.251494,-1.0371,-1.59663,1.71584,-0.639192,-0.94927,-0.525039,0.385408,-1.00702,0.247501,-0.256141,0.0665775,1.17174,0.070676,0.540401,-0.865036,-1.99472,1.50679,1.08228,-0.227395,0.0265819,0.181159,1.9829,-0.2363,-1.16469,0.226036,0.550648]\ngrad=[-0.531162,5.70938e-11,0.105302,0.258229,-0.248385,6.8726e-11,-0.0141463,0.100352,-0.301907,6.99109e-11,0.0508203,0.180257,-0.397789,0,-0.16746,0.239456,0.112764,7.69006e-11,-0.0973841,-0.0706434,0.129851,1.07496e-14,-0.239523,-0.0920566,0.247556,0,-0.406644,-0.20394,-0.0314131,0,-0.147656,0.0162814]"];
-  node2401004 [label="matmul\nval=[5.14621,-1.5253,-6.45214,-8.58401]\ngrad=[-1.33739e-08,0,0,0]"];
-  node2401003 -> node2401004;
-  node1201008 -> node2401004;
-  node1201009 [label="b2\nval=[0.249504,-0.206794,0.696074,0.619285]\ngrad=[0.0899145,3.42613e-11,-0.325474,-0.112411]"];
-  node2401005 [label="+\nval=[5.39571,-1.73209,-5.75606,-7.96472]\ngrad=[-1.33739e-08,0,0,0]"];
-  node2401004 -> node2401005;
-  node1201009 -> node2401005;
-  node2401006 [label="relu\nval=[5.39571,0,0,0]\ngrad=[-1.33739e-08,4.58523e-10,1.03775e-08,8.26196e-09]"];
-  node2401005 -> node2401006;
-  node1201010 [label="W3\nval=[1.76741,-0.0605953,-1.37141,-1.09184]\ngrad=[-0.789253,-2.02616e-10,0.649272,1.19064]"];
-  node2401007 [label="matmul\nval=[9.53641]\ngrad=[-7.56699e-09]"];
-  node2401006 -> node2401007;
-  node1201010 -> node2401007;
-  node1201011 [label="b3\nval=[0.160836]\ngrad=[0.0513328]"];
-  node2401008 [label="+\nval=[9.69725]\ngrad=[-7.56699e-09]"];
-  node2401007 -> node2401008;
-  node1201011 -> node2401008;
-  node2401009 [label="sigmoid\nval=[0.999938]\ngrad=[-0.000123024]"];
-  node2401008 -> node2401009;
-  node2401011 [label="mse\nval=[3.78373e-09]\ngrad=[1]"];
-  node2401010 -> node2401011;
-  node2401009 -> node2401011;
+  // Graph styling
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Arial", fontsize=10, margin=0.1];
+  edge [fontname="Arial", fontsize=8, color="#333333"];
+  
+  // Parameter nodes
+  node2401010 [label="target\nval=[1.000]\ngrad=0.000", fillcolor="white", style="filled", shape="box"];
+  node2401000 [label="x\nval=[0.480, 0.939, 0.729...]\ngrad=[-0.000, -0.000, 0.000...]", fillcolor="white", style="filled", shape="box"];
+  node1201006 [label="W1\nval=[-0.185, -1.276, -0.636...]\ngrad=[-0.005, 0.130, 0.052...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node1201007 [label="b1\nval=[-0.182, 0.512, -0.376...]\ngrad=[-0.357, 0.154, 0.116...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node1201008 [label="W2\nval=[0.153, 0.973, 0.240...]\ngrad=[-0.000, -0.029, -0.053...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node1201009 [label="b2\nval=[0.241, 0.142, -0.185...]\ngrad=[-0.008, -0.008, 0.019...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node1201010 [label="W3\nval=[-1.736, -0.420, -0.749...]\ngrad=[0.004, 0.816, 1.071...]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  node1201011 [label="b3\nval=[0.165]\ngrad=[-0.032]", fillcolor="lightsteelblue", style="filled", shape="circle"];
+  
+  // Operation nodes
+  node2401001 [label="matmul\nval=[-0.785, -3.085, -2.357...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightblue", style="filled", shape="box"];
+  node2401002 [label="+\nval=[-0.967, -2.573, -2.733...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightgreen", style="filled", shape="box"];
+  node2401003 [label="relu\nval=[0.000, 0.000, 0.000...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightcoral", style="filled", shape="ellipse"];
+  node2401004 [label="matmul\nval=[-5.431, -2.023, 1.953...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightblue", style="filled", shape="box"];
+  node2401005 [label="+\nval=[-5.190, -1.881, 1.769...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightgreen", style="filled", shape="box"];
+  node2401006 [label="relu\nval=[0.000, 0.000, 1.769...]\ngrad=[0.000, 0.000, 0.000...]", fillcolor="lightcoral", style="filled", shape="ellipse"];
+  node2401007 [label="matmul\nval=[10.397]\ngrad=[-0.000]", fillcolor="lightblue", style="filled", shape="box"];
+  node2401008 [label="+\nval=[10.562]\ngrad=[-0.000]", fillcolor="lightgreen", style="filled", shape="box"];
+  node2401009 [label="sigmoid\nval=[1.000]\ngrad=[-0.000]", fillcolor="lightpink", style="filled", shape="ellipse"];
+  node2401011 [label="LOSS\nmse\n0.000", fillcolor="lightgray", style="filled", shape="diamond"];
+  
+  // Edges
+  node2401000 -> node2401001 [color="#0066CC", style="bold"];
+  node1201006 -> node2401001 [color="#0066CC", style="bold"];
+  node2401001 -> node2401002 [color="#333333", style="solid"];
+  node1201007 -> node2401002 [color="#333333", style="solid"];
+  node2401002 -> node2401003 [color="#006600", style="solid"];
+  node2401003 -> node2401004 [color="#0066CC", style="bold"];
+  node1201008 -> node2401004 [color="#0066CC", style="bold"];
+  node2401004 -> node2401005 [color="#333333", style="solid"];
+  node1201009 -> node2401005 [color="#333333", style="solid"];
+  node2401005 -> node2401006 [color="#006600", style="solid"];
+  node2401006 -> node2401007 [color="#0066CC", style="bold"];
+  node1201010 -> node2401007 [color="#0066CC", style="bold"];
+  node2401007 -> node2401008 [color="#333333", style="solid"];
+  node1201011 -> node2401008 [color="#333333", style="solid"];
+  node2401008 -> node2401009 [color="#006600", style="solid"];
+  node2401010 -> node2401011 [color="#CC3300", style="bold"];
+  node2401009 -> node2401011 [color="#CC3300", style="bold"];
+  
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    style="filled";
+    fillcolor="#f0f0f0";
+    fontsize=8;
+    
+    legend_param [label="Parameters", fillcolor="lightsteelblue", style="filled", shape="circle"];
+    legend_matmul [label="Matrix Ops", fillcolor="lightblue", style="filled", shape="box"];
+    legend_activation [label="Activations", fillcolor="lightcoral", style="filled", shape="ellipse"];
+    legend_loss [label="Loss", fillcolor="orange", style="filled", shape="diamond"];
+    
+    legend_param -> legend_matmul -> legend_activation -> legend_loss [style="invis"];
+  }
 }
