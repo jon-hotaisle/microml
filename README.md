@@ -6,8 +6,6 @@ A from-scratch C++ neural network framework implementing automatic differentiati
 
 MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies.
 
-**This is not production code** – it's an educational project focused on understanding how modern ML frameworks work under the hood, designed to be auditable, compact, and dependency-light.
-
 ## Architecture & Design
 
 ```
@@ -26,23 +24,23 @@ MicroML is a lightweight neural network framework that demonstrates core deep le
     └────────────────────────────────┘
                      │
     ┌────────────────▼────────────────┐
-    │ Forward Pass Evaluator         │
-    │  • Lazy Execution              │
-    │  • SIMD-Accelerated Kernels    │
+    │ Forward Pass Evaluator          │
+    │  • Lazy Execution               │
+    │  • SIMD-Accelerated Kernels     │
     └────────────────┬────────────────┘
                      │
     ┌────────────────▼────────────────┐
-    │ Backward Pass Differentiator   │
-    │  • Reverse-Mode Autodiff       │
-    │  • Gradient Accumulation       │
+    │ Backward Pass Differentiator    │
+    │  • Reverse-Mode Autodiff        │
+    │  • Gradient Accumulation        │
     └────────────────┬────────────────┘
                      │
     ┌────────────────▼────────────────┐
-    │ Optimizer & Parameter Updates  │
-    │  • AdamW with Bias Correction  │
-    │  • Weight Decay & Clipping     │
-    │  • Momentum Accumulation       │
-    └────────────────────────────────┘
+    │ Optimizer & Parameter Updates   │
+    │  • AdamW with Bias Correction   │
+    │  • Weight Decay & Clipping      │
+    │  • Momentum Accumulation        │
+    └─────────────────────────────────┘
 ```
 
 **Core Components:**
@@ -142,34 +140,34 @@ The framework demonstrates learning on synthetic datasets:
 - **XOR Gate**: Non-linearly separable 2D problem
 
 ### Training Comparison
-Cross-entropy vs MSE loss performance on the same architectures:
+Cross-entropy vs MSE loss performance on the same architectures (600 and 800 Total Samples):
 
 ```
 === GREATER THAN GATE ===
-Cross Entropy Accuracy: 94.0%
-MSE Accuracy: 88.0%
+Cross Entropy Accuracy: 98.0%
+MSE Accuracy: 98.0%
 
 === XOR GATE ===  
-Cross Entropy Accuracy: 92.5%
-MSE Accuracy: 87.0%
+Cross Entropy Accuracy: 100.0%
+MSE Accuracy: 100.0%
 ```
 
 ### Gradient Visualization
 The framework generates computation graph visualizations showing gradient flow through the network:
 
-**Cross-Entropy Loss Graph:**
+**Greater Than Loss Gradient Graph:**
 ![Cross-Entropy Computation Graph](viz/ce_test.png)
 
-**XOR Problem Training:**
+**XOR Gate Loss Gradient Graph:**
 ![XOR with Cross-Entropy](viz/xor_ce_test.png)
 
 These visualizations demonstrate the topological sort and automatic differentiation process, making the gradient flow transparent for educational purposes.
 
 ## Key Learning Outcomes
 
-Building this taught me:
+This was an incredibly fun project to build that got me deep into the weeds of C++ and creating a powerful API for ML:
 
-- **Automatic Differentiation**: How computational graphs enable efficient gradient computation
+- **Automatic Differentiation**: How computational graphs enable efficient gradient computation and can be optimized (via toposort)
 - **Memory Management**: Smart pointer usage for graph nodes and gradient accumulation
 - **Numerical Stability**: Handling edge cases in loss functions and activations  
 - **Linear Algebra**: Matrix operations, broadcasting, and gradient shape management
@@ -185,8 +183,8 @@ cd microml
 
 # Build with optimizations
 g++ -std=c++17 -O3 -march=native -mavx2 -mfma \
-    -I/path/to/xsimd/include \
-    *.cpp -o microml
+    -Ixsimd/include \
+    src/*.cpp -o microml
 
 # Run examples
 ./microml
@@ -249,4 +247,4 @@ This is primarily an educational project, but suggestions and improvements are w
 
 ---
 
-*Built to understand, not to compete with TensorFlow* 😄
+*devpatelio* 🚀 
