@@ -1,11 +1,8 @@
-# MicroML 
+# MicroML  
+A from-scratch C++ neural network framework implementing automatic differentiation, computational graphs, and gradient-based optimization. Built to understand the fundamentals of deep learning by implementing every component from the ground up.
 ![MICROML Cover Letter](cover.png)
 
-A from-scratch C++ neural network framework implementing automatic differentiation, computational graphs, and gradient-based optimization. Built to understand the fundamentals of deep learning by implementing every component from the ground up.
-
-## What This Is
-
-MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies.
+MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies. 
 
 ## Architecture & Design
 
