@@ -1,4 +1,5 @@
-# MicroML 🧠
+# MicroML 
+![MICROML Cover Letter](cover.png)
 
 A from-scratch C++ neural network framework implementing automatic differentiation, computational graphs, and gradient-based optimization. Built to understand the fundamentals of deep learning by implementing every component from the ground up.
 
