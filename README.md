@@ -182,9 +182,9 @@ git clone --recursive https://github.com/your-username/microml.git
 cd microml
 
 # Build with optimizations
-g++ -std=c++20 -O3 -march=native -mavx2 -mfma \
-    -I/path/to/xsimd/include \
-    *.cpp -o microml
+g++ -std=c++17 -O3 -march=native -mavx2 -mfma \
+    -Ixsimd/include \
+    src/*.cpp -o microml
 
 # Run examples
 ./microml
