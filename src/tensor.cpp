@@ -6,8 +6,12 @@
 #include <cmath>
 #include <functional>
 #include <random>
+#include <xsimd/xsimd.hpp>
 
 using namespace std;
+namespace xs = xsimd;
+using batch = xs::batch<float>;
+
 
 vector<size_t> Tensor::compute_strides(const vector<size_t>& shape) {
     int n = (int)shape.size();
@@ -88,15 +92,37 @@ Tensor Tensor::transpose() const {
 Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
     const auto& xs = x.shape();
     const auto& ys = y.shape();
+
     assert(xs.size()==2 && ys.size()==2 && xs[1]==ys[0]);
     size_t l = xs[0], m = xs[1], n = ys[1];
-
     vector<float> out(l * n);
+
+    const float* y_data = y.data.data();
+    const float* x_data = x.data.data();
+    float* out_data = out.data();
+
+    const size_t simd_size = batch::size;
+
+
     for (size_t i = 0; i < l; ++i) {
         for (size_t j = 0; j < n; ++j) {
             float sum = 0.0f;
-            for (size_t k = 0; k < m; ++k) {
-                sum += x.at(i,k) * y.at(k,j);
+            size_t k = 0;
+
+            for (k; k + simd_size <= m; k+=simd_size) {
+                batch x_simd = batch::load_unaligned(&x_data[i * m + k]);
+
+                alignas(32) float y_temp[simd_size];
+                for (size_t p = 0; p < simd_size; ++p) {
+                    y_temp[p] = y_data[(k + p)*n + j];
+                }
+                batch y_simd = batch::load_aligned(y_temp);
+
+                sum += xs::reduce_add(x_simd * y_simd);
+            }
+
+            for (k; k < m; ++k) {
+                sum += x_data[i*m + k] * y_data[k*n + j];
             }
             out[i * n + j] = sum;
         }
@@ -160,51 +186,6 @@ void Tensor::print() {
     }
 }
 
-// ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---
-vector<size_t> Tensor::broadcast_shape(const vector<size_t>& a,
-                                            const vector<size_t>& b) {
-    size_t na = a.size(), nb = b.size(), nr = max(na, nb);
-    vector<size_t> result(nr);
-    for (size_t i = 0; i < nr; ++i) {
-        size_t da = (i < nr - na ? 1 : a[i - (nr - na)]);
-        size_t db = (i < nr - nb ? 1 : b[i - (nr - nb)]);
-        if      (da == db)         result[i] = da;
-        else if (da == 1)          result[i] = db;
-        else if (db == 1)          result[i] = da;
-        else throw invalid_argument("Incompatible broadcast shapes");
-    }
-    return result;
-}
-
-Tensor Tensor::broadcast_to(const Tensor& t,
-                            const vector<size_t>& target_shape) {
-    auto src_shape = t.shape();
-    size_t nd = target_shape.size();
-    vector<size_t> tstrides(nd, 1);
-    for (int i = (int)nd - 2; i >= 0; --i)
-        tstrides[i] = tstrides[i+1] * target_shape[i+1];
-
-    size_t total = 1;
-    for (auto d : target_shape) total *= d;
-    vector<float> data2(total);
-
-    size_t ns = src_shape.size();
-    for (size_t idx = 0; idx < total; ++idx) {
-        vector<size_t> mid(nd);
-        size_t tmp = idx;
-        for (size_t i = 0; i < nd; ++i) {
-            mid[i] = tmp / tstrides[i];
-            tmp    = tmp % tstrides[i];
-        }
-        vector<size_t> src_idx(ns);
-        size_t offset = nd - ns;
-        for (size_t i = 0; i < ns; ++i) {
-            src_idx[i] = (src_shape[i] == 1 ? 0 : mid[i + offset]);
-        }
-        data2[idx] = t.at(src_idx);
-    }
-    return Tensor(move(data2), target_shape);
-}
 
 Tensor Tensor::sum_across_axis(int axis) const{
     const auto& S = shape_;
@@ -262,3 +243,49 @@ Tensor Tensor::fit_gradient_shape(const Tensor& grad, const vector<size_t>& targ
     return grad;
 }
 
+
+// ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---
+vector<size_t> Tensor::broadcast_shape(const vector<size_t>& a,
+                                            const vector<size_t>& b) {
+    size_t na = a.size(), nb = b.size(), nr = max(na, nb);
+    vector<size_t> result(nr);
+    for (size_t i = 0; i < nr; ++i) {
+        size_t da = (i < nr - na ? 1 : a[i - (nr - na)]);
+        size_t db = (i < nr - nb ? 1 : b[i - (nr - nb)]);
+        if      (da == db)         result[i] = da;
+        else if (da == 1)          result[i] = db;
+        else if (db == 1)          result[i] = da;
+        else throw invalid_argument("Incompatible broadcast shapes");
+    }
+    return result;
+}
+
+Tensor Tensor::broadcast_to(const Tensor& t,
+                            const vector<size_t>& target_shape) {
+    auto src_shape = t.shape();
+    size_t nd = target_shape.size();
+    vector<size_t> tstrides(nd, 1);
+    for (int i = (int)nd - 2; i >= 0; --i)
+        tstrides[i] = tstrides[i+1] * target_shape[i+1];
+
+    size_t total = 1;
+    for (auto d : target_shape) total *= d;
+    vector<float> data2(total);
+
+    size_t ns = src_shape.size();
+    for (size_t idx = 0; idx < total; ++idx) {
+        vector<size_t> mid(nd);
+        size_t tmp = idx;
+        for (size_t i = 0; i < nd; ++i) {
+            mid[i] = tmp / tstrides[i];
+            tmp    = tmp % tstrides[i];
+        }
+        vector<size_t> src_idx(ns);
+        size_t offset = nd - ns;
+        for (size_t i = 0; i < ns; ++i) {
+            src_idx[i] = (src_shape[i] == 1 ? 0 : mid[i + offset]);
+        }
+        data2[idx] = t.at(src_idx);
+    }
+    return Tensor(move(data2), target_shape);
+}
