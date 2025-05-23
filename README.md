@@ -1,57 +1,14 @@
-```markdown
-<!--
-███████╗██╗   ██╗██████╗ ██╗ ██████╗ ██╗     ██╗     ██╗     
-██╔════╝██║   ██║██╔══██╗██║██╔═══██╗██║     ██║     ██║     
-█████╗  ██║   ██║██████╔╝██║██║   ██║██║     ██║     ██║     
-██╔══╝  ██║   ██║██╔══██╗██║██║   ██║██║     ██║     ██║     
-██║     ╚██████╔╝██║  ██║██║╚██████╔╝███████╗███████╗███████╗
-╚═╝      ╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝
-                                                             
-          MicroML: Edge Autodiff Engine Library             
--->
+# MicroML 🧠
 
-# MicroML: Edge Autodiff Engine Library 📈⚙️
+A from-scratch C++ neural network framework implementing automatic differentiation, computational graphs, and gradient-based optimization. Built to understand the fundamentals of deep learning by implementing every component from the ground up.
 
-MicroML is a **C++20**–native **Autodiff Engine** and **ML Compiler** framework. Built from the ground up, it fuses the elegance of functional operator overloading with a minimal dependency graph, empowering you to prototype, optimize, and deploy computational graphs at the edge—no GPU required.
+## What This Is
 
----
+MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies.
 
-## 🌟 Table of Contents
-
-1. [Introduction](#introduction)  
-2. [Architecture & Design](#architecture--design)  
-3. [Key Capabilities](#key-capabilities)  
-4. [Code Organization](#code-organization)  
-5. [Building & Installation](#building--installation)  
-6. [Getting Started Examples](#getting-started-examples)  
-7. [Benchmarks & Profiling](#benchmarks--profiling)  
-8. [Limitations & Caveats](#limitations--caveats)  
-9. [Roadmap & Next Steps](#roadmap--next-steps)  
-10. [Contributing](#contributing)  
-11. [License](#license)  
-
----
-
-## Introduction
-
-Edge devices demand **performance**, **compactness**, and **reliability**. MicroML’s Autodiff Engine:
-- **Compiles** your high-level model definitions into a lightweight computational graph.  
-- **Differentiates** through that graph with a two-pass forward/backward engine—no Python runtime.  
-- **Optimizes** kernels for scalar and tensor math on modern CPUs via **xsimd** (AVX2/FMA).  
-- **Deploys** directly as a single `libmicroml.a` or header-only bundle into your IoT, robotics, or mobile firmware.
-
-Whether you’re building:
-- A tiny neural controller for a drone’s flight stabilization  
-- A sensor-fusion pipeline on an embedded ARM board  
-- A research prototype that requires complete auditability of gradients  
-
-…MicroML gives you the building blocks of a **full ML Compiler** and **Autodiff Engine** in <5 MB of code.
-
----
+**This is not production code** – it's an educational project focused on understanding how modern ML frameworks work under the hood, designed to be auditable, compact, and dependency-light.
 
 ## Architecture & Design
-
-```
 
 ```
             ┌────────────────────┐
@@ -81,194 +38,192 @@ Whether you’re building:
     └────────────────┬────────────────┘
                      │
     ┌────────────────▼────────────────┐
-    │ ML Compiler & Optimizer        │
-    │  • AdamW, SGD, RMSProp         │
-    │  • Weight Decay & Clip         │
-    │  • (Planned) Operator Fusion   │
+    │ Optimizer & Parameter Updates  │
+    │  • AdamW with Bias Correction  │
+    │  • Weight Decay & Clipping     │
+    │  • Momentum Accumulation       │
     └────────────────────────────────┘
 ```
 
-```
+**Core Components:**
+- **Value**: Computational graph node holding data, gradient, operation tag, and adjacency list
+- **Tensor**: N-D array with shape, strides, and raw buffer enabling broadcast and matrix operations  
+- **Graph**: Built dynamically on operator calls, finalized by fast topological sort for minimal overhead
 
-- **Value**: Core scalar node type holding data, gradient, op tag, and adjacency.  
-- **Tensor**: N-D array with shape, strides, and raw buffer, enabling broadcast and matmul.  
-- **Graph**: Built on operator calls; finalized by a fast **toposort** for minimal overhead.  
+## Core Features
 
----
+### 🔄 Automatic Differentiation
+- **Computational Graph Construction**: Dynamic graph building with topological sorting for proper gradient flow
+- **Reverse-Mode Autodiff**: Efficient backpropagation through arbitrary computational graphs
+- **Scalar & Tensor Operations**: Built-in ops include `+`, `-`, `*`, `/`, `pow`, `matmul`, `relu`, `sigmoid`
+- **Graph Visualization**: DOT file generation with PNG export via Graphviz for educational demos
 
-## Key Capabilities
+### 🧮 Tensor Operations
+- **Broadcasting**: NumPy-style broadcasting for element-wise operations
+- **SIMD-Accelerated MatMul**: `Tensor::matmul` leverages xsimd for AVX2/FMA speed on dense operations
+- **Memory-Efficient Strides**: Cache-friendly memory access patterns and gradient shape fitting
 
-### 1. Scalar & Tensor Autodiff  
-- Reverse-mode autodiff on both scalars (`Value`) and N-D tensors.  
-- Built-in ops: `+`, `-`, `*`, `/`, `pow`, `exp`, `log`, `relu`, `sigmoid`, `softmax`.
+### 🏗️ Neural Network Components
+- **Value System**: Smart pointer-based computational nodes with automatic memory management
+- **Loss Functions**: Cross-entropy (binary & multi-class) and MSE loss with proper gradients
+- **Activation Functions**: ReLU and Sigmoid with correct derivative computation
+- **MLP Architecture**: Configurable multi-layer perceptrons with Xavier initialization
 
-### 2. SIMD-Accelerated MatMul  
-- `Tensor::matmul` leverages **xsimd** under the hood for AVX2/FMA speed on dense multiplies.  
-- Efficient memory strides and blocking for cache-friendly throughput.
+### ⚡ Optimization & Training
+- **AdamW Optimizer**: Adaptive learning rates with weight decay and bias correction
+- **End-to-End Training**: Complete workflows for binary classification, multi-class CE, MSE regression
+- **Gradient Accumulation**: Proper gradient handling and momentum across training batches
 
-### 3. End-to-End Training Loop  
-- Sample workflows: binary classification, multi-class CE, MSE regression.  
-- Integrated **AdamW** optimizer with bias correction and weight decay.  
-- Hooks for custom schedulers and gradient clipping.
+## Technical Implementation
 
-### 4. Lightweight Dependency Footprint  
-- **Header-only** core; optional `xsimd` for vector math.  
-- No Python, no heavy BLAS/Eigen—fits easily into cross-compilation toolchains.
-
-### 5. Graphviz Visualization  
-- Export `.dot` files for your compute graph (`dump_to_dot`) and generate PNG via `graphviz`.  
-- Inspect node-by-node—ideal for educational demos or auditing.
-
----
-
-## Code Organization
-
-```
-
-microml/
-├─ include/             ← Public headers
-│   ├─ microml/
-│   │   ├─ value.hpp    ← Scalar autograd node
-│   │   ├─ tensor.hpp   ← N-D array with strides
-│   │   ├─ nn.hpp       ← Layer definitions (Linear, MLP, Conv)
-│   │   ├─ optim.hpp    ← Optimizers (AdamW, SGD…)
-│   │   ├─ loss.hpp     ← Loss functions (CE, MSE, BCE)
-│   │   └─ util.hpp     ← Helpers, RNG, etc.
-├─ examples/            ← Standalone demos
-│   ├─ xor\_gate.cpp
-│   └─ greater\_than.cpp
-├─ benchmarks/          ← Google Benchmark tests
-│   └─ matmul\_bench.cpp
-├─ scripts/             ← Build & CI helpers
-│   └─ build.sh
-├─ LICENSE
-└─ README.md
-
-````
-
----
-
-## Building & Installation
-
-1. **Clone**  
-   ```bash
-   git clone https://github.com/your-username/microml.git
-   cd microml
-````
-
-2. **Fetch xsimd** (optional for SIMD)
-
-   ```bash
-   git submodule update --init --recursive
-   ```
-3. **Build Example**
-
-   ```bash
-   bash scripts/build.sh
-   # or manually:
-   g++ -std=c++20 -O3 -march=native -mavx2 -mfma \
-       -Iinclude -Iinclude/xsimd \
-       examples/xor_gate.cpp \
-       -o build/xor_gate
-   ```
-4. **Run**
-
-   ```bash
-   ./build/xor_gate
-   ```
-
----
-
-## Getting Started Examples
-
-### XOR Gate (2-layer MLP)
-
+### Computational Graph Engine
 ```cpp
-// examples/xor_gate.cpp
-#include "microml/value.hpp"
-#include "microml/nn.hpp"
-using namespace microml;
+// Values automatically track computational history
+auto z = Value::add(Value::matmul(x, W), b);  // z = xW + b
+ReLU relu(z);
+auto activated = relu.forward();
 
-int main() {
-  // Define network: 2 → 4 → 1
-  MLP net({2, 4, 1}, Activation::ReLU);
-  std::vector<std::vector<float>> data = {{0,1},{1,0},{0,0},{1,1}};
-  std::vector<float> labels = {1,1,0,0};
+// Backward pass through entire graph
+loss->backward();  // Computes gradients for all parameters
+```
 
-  AdamW optimizer(net.parameters(), 1e-2, 0.9, 0.999, 1e-8, 1e-4);
+### Tensor Broadcasting
+```cpp
+// Automatic shape compatibility
+Tensor A = Tensor({1, 2, 3, 4}, {2, 2});        // (2, 2)
+Tensor B = Tensor({10}, {1});                    // scalar
+auto C = A + B;  // Broadcasting: (2, 2) + (1,) -> (2, 2)
+```
 
-  for (int epoch=0; epoch<500; ++epoch) {
-    float epoch_loss = 0;
-    for (int i=0; i<data.size(); ++i) {
-      auto x = Tensor(data[i]);
-      auto y_true = Tensor({labels[i]});
-      auto y_pred = net.forward(x);
-      auto loss = BCE(y_pred, y_true);
-      loss.backward();
-      optimizer.step();
-      epoch_loss += loss.data()[0];
-    }
-    if (epoch % 50 == 0)
-      printf("[Epoch %d] Loss = %.4f\n", epoch, epoch_loss);
-  }
+### SIMD-Optimized Operations
+Matrix multiplication uses vectorized instructions for performance:
+```cpp
+// Inner loop uses SIMD batches
+for (k; k + simd_size <= m; k += simd_size) {
+    batch x_simd = batch::load_unaligned(&x_data[i * m + k]);
+    batch y_simd = batch::load_aligned(y_temp);
+    sum += xs::reduce_add(x_simd * y_simd);
 }
 ```
 
----
-
-## Benchmarks & Profiling
-
-| Benchmark                | Throughput (MiB/s) | Notes                         |
-| ------------------------ | ------------------ | ----------------------------- |
-| Scalar Backprop (1-node) | 1.2M ops/s         | Single-thread, no simd        |
-| MatMul 128×128           | 8.6 GB/s           | AVX2 @ 3.5 GHz, cache-blocked |
-
-> Use `benchmarks/matmul_bench.cpp` with [Google Benchmark](https://github.com/google/benchmark).
-
----
-
-## Limitations & Caveats
-
-* **No Kernel Fusion**: Each op is its own loop—operator fusion is on the roadmap.
-* **Brute-force Broadcasting**: Works but not memory-optimal for large N-D arrays.
-* **Numeric Instabilities**: Softmax + CE still need log-sum-exp trick for extreme logits.
-* **Single-Threaded Core**: Only matmul is vectorized; no thread pool or GPU.
-* **Manual Memory**: Raw pointers for `ValuePtr`; future upgrade to smart pointers + RAII.
-
----
-
-## Roadmap & Next Steps
-
-1. **Operator Fusion & JIT**
-
-   * Auto-fuse sequences (e.g. `MatMul + Add + ReLU`) into single kernels.
-   * Investigate LLVM ORC JIT for runtime codegen.
-2. **Graph Optimizations**
-
-   * CSE, dead-node pruning, constant folding, shape inference.
-3. **Parallel & GPU Backends**
-
-   * Thread pool offload, CUDA/PTX backend, or OpenCL.
-4. **Python Frontend**
-
-   * Expose Tensor/Value API via PyBind11 for rapid prototyping.
-5. **Model Zoo & Tutorials**
-
-   * Common architectures: simple CNNs, RNNs, Transformer encoder stub.
-6. **Documentation & CI**
-
-   * Doxygen docs, automated benchmarks, GitHub Actions CI + releases.
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-Feel free to use, modify, and redistribute!
+## Project Structure
 
 ```
+microml/
+├── src/
+│   ├── tensor.{hpp,cpp}     # N-D tensor operations & broadcasting  
+│   ├── prime.{hpp,cpp}      # Value system & automatic differentiation core
+│   ├── loss.{hpp,cpp}       # Loss functions (CE, MSE) & activation functions
+│   ├── nn.{hpp,cpp}         # Neural network architectures (MLP)
+│   ├── optim.{hpp,cpp}      # Optimization algorithms (AdamW)
+│   ├── main.cpp             # Training examples & loss function comparisons
+│   └── test.cpp             # Development tests & validation
+├── viz/                     # Generated computation graph visualizations
+│   ├── ce_test.{dot,png}    # Cross-entropy loss computation graph
+│   ├── mse_test.{dot,png}   # MSE loss computation graph  
+│   ├── xor_ce_test.{dot,png}    # XOR training with CE loss
+│   └── xor_mse_test.{dot,png}   # XOR training with MSE loss
+├── xsimd/                   # SIMD acceleration library (submodule)
+└── README.md
+```
+
+## Dependencies
+
+- **xsimd**: SIMD-accelerated tensor operations (AVX2/FMA)
+- **C++17**: Modern C++ features for clean memory management
+- **Graphviz**: Optional, for computational graph visualization
+
+## Examples & Results
+
+The framework demonstrates learning on synthetic datasets:
+
+### Binary Classification Tasks
+- **Greater Than Gate**: 4-feature classification (sum comparison)
+- **XOR Gate**: Non-linearly separable 2D problem
+
+### Training Comparison
+Cross-entropy vs MSE loss performance on the same architectures:
+
+```
+=== GREATER THAN GATE ===
+Cross Entropy Accuracy: 94.0%
+MSE Accuracy: 88.0%
+
+=== XOR GATE ===  
+Cross Entropy Accuracy: 92.5%
+MSE Accuracy: 87.0%
+```
+
+### Gradient Visualization
+The framework generates computation graph visualizations showing gradient flow through the network:
+
+**Cross-Entropy Loss Graph:**
+![Cross-Entropy Computation Graph](viz/ce_test.png)
+
+**XOR Problem Training:**
+![XOR with Cross-Entropy](viz/xor_ce_test.png)
+
+These visualizations demonstrate the topological sort and automatic differentiation process, making the gradient flow transparent for educational purposes.
+
+## Key Learning Outcomes
+
+Building this taught me:
+
+- **Automatic Differentiation**: How computational graphs enable efficient gradient computation
+- **Memory Management**: Smart pointer usage for graph nodes and gradient accumulation
+- **Numerical Stability**: Handling edge cases in loss functions and activations  
+- **Linear Algebra**: Matrix operations, broadcasting, and gradient shape management
+- **Optimization Theory**: How adaptive learning rates and momentum work in practice
+- **Software Architecture**: Designing modular, extensible ML components
+
+## Build & Run
+
+```bash
+# Clone with xsimd submodule for SIMD operations
+git clone --recursive https://github.com/your-username/microml.git
+cd microml
+
+# Build with optimizations
+g++ -std=c++17 -O3 -march=native -mavx2 -mfma \
+    -I/path/to/xsimd/include \
+    *.cpp -o microml
+
+# Run examples
+./microml
+```
+
+## Performance Notes
+
+- **SIMD Vectorization**: Matrix operations leverage AVX2/FMA instructions
+- **Cache-Friendly**: Memory strides optimized for sequential access patterns  
+- **Lightweight**: Minimal dependency footprint suitable for embedded applications
+
+## Limitations & Future Work
+
+**Current Limitations:**
+- Single-threaded execution (except vectorized matmul)
+- No operator fusion or kernel optimization
+- Limited to dense layers
+- Basic numeric stability handling
+
+**Potential Extensions:**
+- Operator fusion for fused kernels (MatMul + Add + ReLU)
+- Thread pool for parallel operations
+- Convolutional layers and common architectures
+- Advanced optimizers and learning rate schedules
+- Python bindings for rapid prototyping
+
+## Inspiration
+
+This project was inspired by:
+- [micrograd](https://github.com/karpathy/micrograd) by Andrej Karpathy
+- Understanding PyTorch's autograd system
+- Implementing the math behind neural networks from scratch
+
+## Contributing
+
+This is primarily an educational project, but suggestions and improvements are welcome! The code prioritizes clarity and learning over performance.
 
 ---
 
-> **MicroML** isn’t just “another autodiff toy” — it’s a foundation for your **edge compute** ambitions, blending **autodiff**, **compiler techniques**, and **SIMD-optimized** kernels into a single, modern C++ library. Build, iterate, and deploy your next-generation ML workloads right where they need to run: at the edge.
-```
+*Built to understand, not to compete with TensorFlow* 😄
