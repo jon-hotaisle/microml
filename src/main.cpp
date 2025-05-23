@@ -11,6 +11,7 @@
 #include <random>
 #include <chrono>
 
+
 using namespace std;
 
 int main() {
@@ -24,7 +25,8 @@ int main() {
     std::vector<std::vector<float>> X_gt;
     std::vector<float> y_gt; 
     std::cout << "----------- GREATER THAN GATE -----------" << "\n";
-    
+    auto start_gt_ce = std::chrono::high_resolution_clock::now();
+
     std::cout << "Generating " << n_samples << " samples with " << n_features << " features...\n";
     
     for (int i = 0; i < n_samples; ++i) {
@@ -142,6 +144,11 @@ int main() {
                       << avg_loss << std::endl;
         }
     }
+
+    auto end_gt_ce = std::chrono::high_resolution_clock::now();
+    auto duration_gt_ce = std::chrono::duration_cast<std::chrono::milliseconds>(end_gt_ce - start_gt_ce);
+    
+    std::cout << "Greater Than Gate (CE Loss) Training Time: " << duration_gt_ce.count() << " ms\n";
     
     int correct_ce_gt = 0;
     std::cout << "\nCross Entropy Model Predictions (first 10 test samples):\n";
@@ -188,6 +195,8 @@ int main() {
               << (100.0f * correct_ce_gt / X_test_gt.size()) << "%\n";
     
     std::cout << "\n=== TRAINING WITH MSE LOSS ===\n";
+
+    auto start_gt_mse = std::chrono::high_resolution_clock::now();
     
     MLP mlp_mse_gt(n_features, 8, 4, 1);
     std::vector<AdamW> opts_mse_gt;
@@ -231,6 +240,11 @@ int main() {
                       << (epoch_loss / train_size) << std::endl;
         }
     }
+    
+    auto end_gt_mse = std::chrono::high_resolution_clock::now();
+    auto duration_gt_mse = std::chrono::duration_cast<std::chrono::milliseconds>(end_gt_mse - start_gt_mse);
+    
+    std::cout << "Greater Than Gate (MSE Loss) Training Time: " << duration_gt_mse.count() << " ms\n";
     
     int correct_mse_gt = 0;
     std::cout << "\nMSE Model Predictions (first 10 test samples):\n";
@@ -287,6 +301,8 @@ int main() {
     std::vector<float> y_xor;
     
     std::cout << "\n----------- XOR GATE -----------" << "\n";
+       
+    auto start_xor_ce = std::chrono::high_resolution_clock::now();
 
     std::cout << "Generating " << n_samples << " samples with " << n_features << " features...\n";
 
@@ -406,6 +422,12 @@ int main() {
         }
     }
 
+    auto end_xor_ce = std::chrono::high_resolution_clock::now();
+    auto duration_xor_ce = std::chrono::duration_cast<std::chrono::milliseconds>(end_xor_ce - start_xor_ce);
+    
+    std::cout << "XOR Gate (CE Loss) Training Time: " << duration_xor_ce.count() << " ms\n";
+    
+
     int correct_ce_xor = 0;
     std::cout << "\nCross Entropy Model Predictions (first 12 test samples):\n";
     for (int i = 0; i < std::min(12, (int)X_test_xor.size()); ++i) {
@@ -451,6 +473,7 @@ int main() {
             << (100.0f * correct_ce_xor / X_test_xor.size()) << "%\n";
 
     std::cout << "\n=== TRAINING WITH MSE LOSS ===\n";
+    auto start_xor_mse = std::chrono::high_resolution_clock::now();
 
     MLP mlp_mse_xor(n_features, 6, 4, 1);
     std::vector<AdamW> opts_mse_xor;
@@ -494,6 +517,12 @@ int main() {
                     << (epoch_loss / train_size) << std::endl;
         }
     }
+
+    auto end_xor_mse = std::chrono::high_resolution_clock::now();
+    auto duration_xor_mse = std::chrono::duration_cast<std::chrono::milliseconds>(end_xor_mse - start_xor_mse);
+    
+    std::cout << "XOR Gate (MSE Loss) Training Time: " << duration_xor_mse.count() << " ms\n";
+    
 
     int correct_mse_xor = 0;
     std::cout << "\nMSE Model Predictions (first 12 test samples):\n";
@@ -541,7 +570,14 @@ int main() {
 
     std::cout << "\n=== XOR COMPARISON ===\n";
     std::cout << "Cross Entropy Accuracy: " << (100.0f * correct_ce_xor / X_test_xor.size()) << "%\n";
-    std::cout << "MSE Accuracy: " << (100.0f * correct_mse_xor / X_test_xor.size()) << "%\n";
+    std::cout << "MSE Accuracy: " << (100.0f * correct_mse_xor / X_test_xor.size()) << "%\n" << "%\n";
+
+    std::cout << "\n=== TIMING SUMMARY ===\n";
+    std::cout << "Greater Than Gate CE: " << duration_gt_ce.count() << " ms\n";
+    std::cout << "Greater Than Gate MSE: " << duration_gt_mse.count() << " ms\n";
+    std::cout << "XOR Gate CE: " << duration_xor_ce.count() << " ms\n";
+    std::cout << "XOR Gate MSE: " << duration_xor_mse.count() << " ms\n";
+    std::cout << "Total Training Time: " << (duration_gt_ce.count() + duration_gt_mse.count() + duration_xor_ce.count() + duration_xor_mse.count()) << " ms\n";
 
     return 0;
 }

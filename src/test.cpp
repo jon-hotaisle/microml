@@ -8,7 +8,7 @@ bool almost_eq(float a, float b, float tol=1e-6f) {
     return std::fabs(a - b) < tol;
 }
 
-int main() {
+int test() {
     
     // basic arithmetic check to track trace
     // auto a = Value::create(1.0, "");

@@ -130,6 +130,26 @@ Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
     return Tensor(move(out), {l, n});
 }
 
+// NO SIMD for benchmarking purposes
+// Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
+//     const auto& xs = x.shape();
+//     const auto& ys = y.shape();
+//     assert(xs.size()==2 && ys.size()==2 && xs[1]==ys[0]);
+//     size_t l = xs[0], m = xs[1], n = ys[1];
+
+//     vector<float> out(l * n);
+//     for (size_t i = 0; i < l; ++i) {
+//         for (size_t j = 0; j < n; ++j) {
+//             float sum = 0.0f;
+//             for (size_t k = 0; k < m; ++k) {
+//                 sum += x.at(i,k) * y.at(k,j);
+//             }
+//             out[i * n + j] = sum;
+//         }
+//     }
+//     return Tensor(move(out), {l, n});
+// }
+
 Tensor Tensor::apply(std::function<float(float)> func) const {
     vector<float> result_data;
     result_data.reserve(data.size());
