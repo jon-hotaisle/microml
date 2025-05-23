@@ -4,7 +4,7 @@
 
 ![MICROML Cover Letter](cover.png)
 
-**A lightweight neural network framework demonstrating core deep learning concepts**
+**A lightweight neural network framework for core deep learning applications**
 
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg?style=flat&logo=c%2B%2B)](https://en.cppreference.com/w/cpp/20)
 [![SIMD](https://img.shields.io/badge/SIMD-AVX2%2FFMA-orange.svg?style=flat)](https://github.com/xtensor-stack/xsimd)
