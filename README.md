@@ -10,5 +10,5 @@
     - Computational Graph Optimization
 
 Commands:
-g++ -std=c++20 main.cpp prime.cpp loss.cpp mat.cpp -o main
+g++ -std=c++20 main.cpp nn.cpp optim.cpp prime.cpp tensor.cpp loss.cpp -o main
 ./main

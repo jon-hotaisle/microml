@@ -14,7 +14,7 @@ int main() {
     std::normal_distribution<float> dis(0.0f, 1.0f);
     
     // Create 100 samples with 4 features each
-    size_t n_samples = 100;
+    size_t n_samples = 200;
     size_t n_features = 4;
     
     std::vector<std::vector<float>> X;
@@ -36,7 +36,6 @@ int main() {
         X.push_back(sample);
     }
     
-    // Print some sample data
     std::cout << "Sample data (first 5 examples):\n";
     for (int i = 0; i < 5; ++i) {
         std::cout << "X[" << i << "] = [";
@@ -47,8 +46,7 @@ int main() {
         std::cout << "] -> y = " << y[i] << "\n";
     }
     
-    // Split into train/test (80/20)
-    int train_size = 80;
+    int train_size = 160;
     std::vector<std::vector<float>> X_train(X.begin(), X.begin() + train_size);
     std::vector<float> y_train(y.begin(), y.begin() + train_size);
     std::vector<std::vector<float>> X_test(X.begin() + train_size, X.end());
