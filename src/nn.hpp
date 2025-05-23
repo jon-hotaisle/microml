@@ -15,14 +15,15 @@ class TensorMLP {
             float limit3 = sqrt(6.0f / (hidden2_size + output_size));
             
             W1 = Value::create(Tensor::randn({input_size, hidden1_size}, 0.0f, limit1), "W1");
-            b1 = Value::create(Tensor::zeros({hidden1_size}), "b1");
-        
+            b1 = Value::create(Tensor::zeros({1, hidden1_size}), "b1");  // Changed from {hidden1_size} to {1, hidden1_size}
+
             W2 = Value::create(Tensor::randn({hidden1_size, hidden2_size}, 0.0f, limit2), "W2");
-            b2 = Value::create(Tensor::zeros({hidden2_size}), "b2");
+            b2 = Value::create(Tensor::zeros({1, hidden2_size}), "b2");  // Changed from {hidden2_size} to {1, hidden2_size}
             
             W3 = Value::create(Tensor::randn({hidden2_size, output_size}, 0.0f, limit3), "W3");
-            b3 = Value::create(Tensor::zeros({output_size}), "b3");
+            b3 = Value::create(Tensor::zeros({1, output_size}), "b3");   // Changed from {output_size} to {1, output_size}
         }
+
 
         ValuePtr forward(ValuePtr x);
         std::vector<ValuePtr> parameters();

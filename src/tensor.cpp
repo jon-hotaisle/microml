@@ -233,30 +233,21 @@ Tensor Tensor::sum_across_axis(int axis) const{
 }
 
 Tensor Tensor::fit_gradient_shape(const Tensor& grad, const vector<size_t>& target_shape) {
-    vector<size_t> gradient_shape = grad.shape();
-    vector<int> sum_across_axes;
-   
-    int grad_size = gradient_shape.size();
-    int target_size = target_shape.size();
-    // assuming gradient shape is a lot bigger, we wanna basically collapse any extra dimensions assuming we broadcasted from target shape
-    for (int i = 0; i < grad_size; i++) {
-        sum_across_axes.push_back(i);
+    if (grad.shape() == target_shape) {
+        return grad;
     }
-
-    // sum across all of these dimensions
-    for (int i = 0; i < target_size; i++) {
-        int dim_i = grad_size-target_size+i;
-        if (target_shape[i] == 1 && gradient_shape[dim_i] > 1) {
-            sum_across_axes.push_back(dim_i);
-        }
+    
+    size_t grad_total = 1;
+    for (auto d : grad.shape()) grad_total *= d;
+    
+    size_t target_total = 1; 
+    for (auto d : target_shape) target_total *= d;
+    
+    if (grad_total == target_total) {
+        return Tensor(grad.data, target_shape);
     }
-
-    sort(sum_across_axes.rbegin(), sum_across_axes.rend());
-    Tensor result = grad;
-    for (int axis: sum_across_axes) {
-        result = result.sum_across_axis(axis);
-    }
-    return result;
+    
+    return grad;
 }
 
 void Tensor::print() {
