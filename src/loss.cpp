@@ -11,19 +11,16 @@ CrossEntropyLoss::CrossEntropyLoss(ValuePtr tgt, ValuePtr pr, size_t n_classes):
 
 float CrossEntropyLoss::grad_calc_local() const {
     if (n_classes == 2) {
-        // Binary case - keep original logic
         float t = target->get_val();
         float p = pred->get_val();
         return (-t / (p + eps)) + ((1 - t) / (1 - p + eps));
     } else {
-        // Multi-class case - this is just for compatibility, real computation is in forward()
-        return 0.0f; // Not used in multi-class case
+        return 0.0f; // not used in multi-class case
     }
 }
 
 ValuePtr CrossEntropyLoss::forward() {
     if (n_classes == 2) {
-        // Original binary cross-entropy implementation
         const Tensor& target_tensor = target->get_tensor();
         const Tensor& pred_tensor = pred->get_tensor();
         
@@ -70,15 +67,12 @@ ValuePtr CrossEntropyLoss::forward() {
         return loss_node;
         
     } else {
-        // Multi-class cross-entropy with softmax
         const Tensor& logits_tensor = pred->get_tensor();
         const Tensor& target_tensor = target->get_tensor();
         
-        // Apply softmax to logits for numerical stability
-        // First, subtract max for numerical stability
+        // softmax
         float max_val = *std::max_element(logits_tensor.data.begin(), logits_tensor.data.end());
         
-        // Compute softmax
         vector<float> softmax_vals(logits_tensor.data.size());
         float sum_exp = 0.0f;
         
@@ -87,12 +81,10 @@ ValuePtr CrossEntropyLoss::forward() {
             sum_exp += softmax_vals[i];
         }
         
-        // Normalize
         for (size_t i = 0; i < softmax_vals.size(); ++i) {
             softmax_vals[i] /= sum_exp;
         }
         
-        // Compute cross-entropy loss: -sum(target * log(softmax + eps))
         float loss_val = 0.0f;
         for (size_t i = 0; i < target_tensor.data.size(); ++i) {
             if (target_tensor.data[i] > 0.0f) {
@@ -102,7 +94,6 @@ ValuePtr CrossEntropyLoss::forward() {
         
         auto loss_node = Value::create(loss_val, "cross_entropy");
         
-        // Set up backward pass
         ValuePtr T = target, P = pred, L = loss_node;
         float local_eps = eps;
         
@@ -111,7 +102,6 @@ ValuePtr CrossEntropyLoss::forward() {
             const Tensor& target_tensor = T->get_tensor();
             const Tensor& loss_grad = L->get_grad();
             
-            // Recompute softmax for gradient calculation
             float max_val = *std::max_element(logits_tensor.data.begin(), logits_tensor.data.end());
             vector<float> softmax_vals(logits_tensor.data.size());
             float sum_exp = 0.0f;
@@ -125,7 +115,6 @@ ValuePtr CrossEntropyLoss::forward() {
                 softmax_vals[i] /= sum_exp;
             }
             
-            // Gradient of cross-entropy with softmax: softmax - target
             Tensor pred_grad = Tensor::zeros(logits_tensor.shape());
             float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value() : loss_grad.data[0];
             
