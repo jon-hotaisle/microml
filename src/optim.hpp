@@ -7,6 +7,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "prime.hpp"
+using namespace std;
 
 class AdamW {
     private:

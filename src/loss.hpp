@@ -3,6 +3,7 @@
 #include <functional>
 #include <limits>
 #include "prime.hpp"
+using namespace std;
 
 class CrossEntropyLoss {
     private:

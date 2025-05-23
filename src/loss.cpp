@@ -2,11 +2,13 @@
 #include "prime.hpp"
 #include <cmath>
 #include <algorithm>
+using namespace std;
+
 
 CrossEntropyLoss::CrossEntropyLoss(ValuePtr tgt, ValuePtr pr)
-  : target(std::move(tgt))
-  , pred(std::move(pr))
-  , eps(std::numeric_limits<float>::epsilon())
+  : target(move(tgt))
+  , pred(move(pr))
+  , eps(numeric_limits<float>::epsilon())
 {}
 
 float CrossEntropyLoss::grad_calc_local() const {
@@ -18,7 +20,7 @@ float CrossEntropyLoss::grad_calc_local() const {
 ValuePtr CrossEntropyLoss::forward() {
     float t = target->get_val();
     float p = pred->get_val();
-    float loss_val = - (t * std::log(p + eps) + (1 - t) * std::log(1 - p + eps));
+    float loss_val = - (t * log(p + eps) + (1 - t) * log(1 - p + eps));
     auto loss_node = Value::create(loss_val, "bce");
 
     ValuePtr T = target, P = pred, L = loss_node;
@@ -27,7 +29,8 @@ ValuePtr CrossEntropyLoss::forward() {
         float t = T->get_val();
         float p = P->get_val();
         float g = (-t / (p + local_eps)) + ((1 - t) / (1 - p + local_eps));
-        P->add_grad(g * L->get_grad());
+
+        P->add_grad(Tensor(g) * L->get_grad());
     };
 
     loss_node->set_prev({target, pred});
@@ -35,8 +38,8 @@ ValuePtr CrossEntropyLoss::forward() {
 }
 
 MSELoss::MSELoss(ValuePtr tgt, ValuePtr pr)
-  : target(std::move(tgt))
-  , pred(std::move(pr))
+  : target(move(tgt))
+  , pred(move(pr))
 {}
 
 float MSELoss::grad_calc_local() const {
@@ -54,7 +57,7 @@ ValuePtr MSELoss::forward() {
     ValuePtr T = target, P = pred, L = loss_node;
     loss_node->_backward = [T, P, L]() {
         float g = 2.0f * (P->get_val() - T->get_val());
-        P->add_grad(g * L->get_grad());
+        P->add_grad(Tensor(g) * L->get_grad());
     };
 
     loss_node->set_prev({target, pred});
@@ -62,7 +65,7 @@ ValuePtr MSELoss::forward() {
 }
 
 ReLU::ReLU(ValuePtr inp)
-  : input(std::move(inp))
+  : input(move(inp))
 {}
 
 float ReLU::grad_calc_local() const {
@@ -71,12 +74,12 @@ float ReLU::grad_calc_local() const {
 
 ValuePtr ReLU::forward() {
     float x = input->get_val();
-    auto node = Value::create(std::max(0.0f, x), "relu");
+    auto node = Value::create(max(0.0f, x), "relu");
     ValuePtr I = input, N = node;
     node->_backward = [I, N]() {
-        float g = N->get_grad();
-        float grad_local = I->get_val() > 0.0f ? 1.0f : 0.0f;
-        I->add_grad(grad_local * g);
+        Tensor node_grad = N->get_grad();
+        float inp_grad = I->get_val() > 0.0f ? 1.0f : 0.0f;
+        I->add_grad(node_grad * Tensor(inp_grad));
     };
     node->set_prev({input});
     return node;

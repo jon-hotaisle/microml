@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 
+using namespace std;
 
 Value::Value(float val, const string &op, size_t id): 
     data(val), grad(0.0f), op(op), id(id)
@@ -17,12 +18,12 @@ Value::Value(const Tensor &t, const string &op, size_t id):
     data(t), grad(Tensor(0.0f)), op(op), id(id) 
 {}
 
-ValuePtr Value::create(float val, const std::string &op) {
-    return std::make_shared<Value>(val, op, currentID++);
+ValuePtr Value::create(float val, const string &op) {
+    return make_shared<Value>(val, op, currentID++);
 }
 
-ValuePtr Value::create(const Tensor &t, const std::string &op) {
-    return std::make_shared<Value>(t, op, currentID++);
+ValuePtr Value::create(const Tensor &t, const string &op) {
+    return make_shared<Value>(t, op, currentID++);
 }
 Value::~Value() {
     --Value::currentID;
@@ -48,7 +49,7 @@ void Value::print(bool verbose, int depth) {
     }
 }
 
-float Value::get_val() {
+float Value::get_val() const {
     return data.scalar_value();
 }
 
@@ -56,23 +57,27 @@ void Value::set_val(float val) {
     data = Tensor(val);
 }
 
-void Value::set_prev(const std::vector<ValuePtr>& parents) {
+void Value::set_prev(const vector<ValuePtr>& parents) {
     prev = parents;
+}
+
+void Value::set_grad(const Tensor &g) {
+    grad = g;
 }
 
 void Value::set_grad(float g) {
     grad = Tensor(g);
 }
 
-void Value::add_grad(float g) {
-    grad = grad + Tensor(g);
+void Value::add_grad(const Tensor &g) {
+    grad = grad + g;
 }
 
-float Value::get_grad() {
-    return grad.scalar_value();
+const Tensor& Value::get_grad() const {
+    return grad;
 }
 
-std::string Value::get_op() {
+string Value::get_op() const {
     return op;
 }
 
@@ -81,9 +86,9 @@ ValuePtr Value::add(const ValuePtr& lhs, const ValuePtr& rhs) {
     auto node = Value::create(out, "+");
     node->set_prev({lhs, rhs});
     node->_backward = [lhs, rhs, node]() {
-        float g = node->get_grad();
-        lhs->add_grad(g);
-        rhs->add_grad(g);
+        Tensor g = node->get_grad();
+        lhs->add_grad(Tensor::fit_gradient_shape(g, lhs->data.shape()));
+        rhs->add_grad(Tensor::fit_gradient_shape(g, rhs->data.shape()));
     };
     return node;
 }
@@ -93,9 +98,9 @@ ValuePtr Value::sub(const ValuePtr& lhs, const ValuePtr& rhs) {
     auto node = Value::create(out, "-");
     node->set_prev({lhs, rhs});
     node->_backward = [lhs, rhs, node]() {
-        float g = node->get_grad();
-        lhs->add_grad(g);
-        rhs->add_grad(-g);
+        Tensor g = node->get_grad();
+        lhs->add_grad(Tensor::fit_gradient_shape(g, lhs->data.shape()));
+        rhs->add_grad(Tensor::fit_gradient_shape(-1*g, rhs->data.shape()));
     };
     return node;
 }
@@ -105,9 +110,9 @@ ValuePtr Value::mult(const ValuePtr& lhs, const ValuePtr& rhs) {
     auto node = Value::create(out, "*");
     node->set_prev({lhs, rhs});
     node->_backward = [lhs, rhs, node]() {
-        float g = node->get_grad();
-        lhs->add_grad(rhs->get_val() * g);
-        rhs->add_grad(lhs->get_val() * g);
+        Tensor g = node->get_grad();
+        lhs->add_grad(Tensor::fit_gradient_shape(rhs->data * g, lhs->data.shape()));
+        rhs->add_grad(Tensor::fit_gradient_shape(lhs->data * g, rhs->data.shape()));
     };
     return node;
 }
@@ -115,15 +120,15 @@ ValuePtr Value::mult(const ValuePtr& lhs, const ValuePtr& rhs) {
 ValuePtr Value::exp(const ValuePtr& base, const ValuePtr& power) {
     float b = base->get_val();
     float p = power->get_val();
-    float outv = std::pow(b, p);
+    float outv = pow(b, p);
     auto node = Value::create(outv, "^");
     node->set_prev({base, power});
     node->_backward = [base, power, node, outv]() {
-        float g = node->get_grad();
+        float g = node->get_grad().scalar_value();;
         float b = base->get_val();
         float p = power->get_val();
-        base->add_grad(g * p * std::pow(b, p - 1));
-        power->add_grad(g * outv * std::log(b));
+        base->add_grad(Tensor(g * p * pow(b, p - 1)));
+        power->add_grad(Tensor(g * outv * log(b)));
     };
     return node;
 }
@@ -138,19 +143,33 @@ ValuePtr Value::divp(const ValuePtr& num, const ValuePtr& den) {
     auto node = Value::create(outv, "/");
     node->set_prev({num, den});
     node->_backward = [num, den, node]() {
-        float g = node->get_grad();
-        num->add_grad(g / den->get_val());
-        den->add_grad(-g * num->get_val() / (den->get_val() * den->get_val()));
+        float g = node->get_grad().scalar_value();
+        num->add_grad(Tensor(g / den->get_val()));
+        den->add_grad(Tensor(-g * num->get_val() / (den->get_val() * den->get_val())));
     };
     return node;
 }
 
+ValuePtr Value::matmul(const ValuePtr& A, const ValuePtr& B) {
+    auto outTensor = Tensor::matmul(A->data, B->data);
+    auto node = Value::create(outTensor, "matmul");
+    node->set_prev({A,B});
+    node->_backward = [A,B,node]() {
+        Tensor g = node->get_grad();
+        A->add_grad(Tensor::matmul(g, B->data.transpose())); // dA*B/d_ flips order, transpose for shape
+        B->add_grad(Tensor::matmul(A->data.transpose(), g));
+    };
+    return node;
+}
 
-void Value::backward() {
+void Value::backward(bool retain_graph = false) {
     vector<ValuePtr> topo;
     unordered_set<Value*> visited;
     topo_sort(topo, visited);
-    this->grad = 1.0f;
+
+    if (!retain_graph || grad.is_scalar() && grad.scalar_value() == 0.0f) {
+        grad = Tensor(1.0f);
+    }
 
     for (auto next = topo.rbegin(); next != topo.rend(); ++next) {
         auto& node = *next;
@@ -177,7 +196,7 @@ void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
     for (auto& node : topo) {
         out << "  node" << node->id
             << " [label=\"" << node->op << "\\nval=" << node->get_val()
-            << "\\ngrad=" << node->get_grad() << "\"];\n";
+            << "\\ngrad=" << node->get_grad().scalar_value() << "\"];\n";
         for (auto& parent : node->prev) {
             out << "  node" << parent->id << " -> node" << node->id << ";\n";
         }
@@ -190,12 +209,12 @@ void Value::visualize(const vector<ValuePtr>& topo, const string& base_path) {
     string dotfile = base_path + ".dot";
     string pngfile = base_path + ".png";
     dump_to_dot(topo, dotfile);
-    std::string cmd = "dot -Tpng " + dotfile + " -o " + pngfile;
-    std::cout << "Running: " << cmd << "\n";
-    int ret = std::system(cmd.c_str());
+    string cmd = "dot -Tpng " + dotfile + " -o " + pngfile;
+    cout << "Running: " << cmd << "\n";
+    int ret = system(cmd.c_str());
     if (ret != 0) {
-        std::cerr << "Error: dot command failed with code " << ret << "\n";
+        cerr << "Error: dot command failed with code " << ret << "\n";
     } else {
-        std::cout << "Graph written to " << pngfile << "\n";
+        cout << "Graph written to " << pngfile << "\n";
     }
 }

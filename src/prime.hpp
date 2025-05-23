@@ -12,16 +12,16 @@
 using namespace std;
 
 class Value;
-using ValuePtr = std::shared_ptr<Value>;
+using ValuePtr = shared_ptr<Value>; // ---- Credit to Gautam Sharma for inspiring this initial Value and ValuePtr setup (https://www.youtube.com/watch?v=wOuMVD3XoHU) ---
 
-class Value : public std::enable_shared_from_this<Value> {
+class Value : public enable_shared_from_this<Value> {
 private:
     inline static size_t currentID = 0;
     Tensor data;
     Tensor grad;
-    std::string op;
+    string op;
     size_t id;
-    std::vector<ValuePtr> prev;
+    vector<ValuePtr> prev;
     // void run_backward(vector<ValuePtr>& topo);
     
 public:
@@ -30,17 +30,26 @@ public:
 
     ~Value();
 
-    static ValuePtr create(float data, const std::string& op = "");
-    static ValuePtr create(const Tensor &t, const std::string &op="");
+    static ValuePtr create(float data, const string& op = "");
+    static ValuePtr create(const Tensor &t, const string &op="");
 
     void print(bool verbose = true, int depth = 0);
 
-    float get_val();
-    void set_val(float val);
-    float get_grad();
+    float get_val() const;
+    const Tensor& get_grad() const;
+    void set_grad(const Tensor &g);
     void set_grad(float g);
-    void add_grad(float g);
-    string get_op();
+
+    void add_grad(const Tensor &g);
+    string get_op() const;
+
+    void set_val(float val);
+
+    // float get_grad();
+    // void set_grad(float g);
+    // void add_grad(float g);
+
+
     void set_prev(const vector<ValuePtr>& parents);
 
 
@@ -50,14 +59,15 @@ public:
     static ValuePtr exp(const ValuePtr& base, const ValuePtr& power);
     static ValuePtr div(const ValuePtr& num, const ValuePtr& den);
     static ValuePtr divp(const ValuePtr& num, const ValuePtr& den);
+    static ValuePtr matmul(const ValuePtr& A, const ValuePtr& B);
 
 
 
     function<void()> _backward;
-    void backward();
+    void backward(bool retain_graph);
     void topo_sort(vector<ValuePtr>& topo, unordered_set<Value*>& visited);
     static void dump_to_dot(const vector<ValuePtr>& topo, const string& filename);
-    static void visualize(const std::vector<ValuePtr>& topo, const std::string& basename);
+    static void visualize(const vector<ValuePtr>& topo, const string& basename);
     
 };
 

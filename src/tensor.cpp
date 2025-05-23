@@ -7,19 +7,19 @@
 
 using namespace std;
 
-std::vector<size_t> Tensor::compute_strides(const std::vector<size_t>& shape) {
+vector<size_t> Tensor::compute_strides(const vector<size_t>& shape) {
     int n = (int)shape.size();
-    std::vector<size_t> s(n, 1);
+    vector<size_t> s(n, 1);
     for (int k = n - 2; k >= 0; --k) {
         s[k] = s[k+1] * shape[k+1];
     }
     return s;
 }
 
-Tensor::Tensor(std::vector<float> data_, std::vector<size_t> shape_)
+Tensor::Tensor(vector<float> data_, vector<size_t> shape_)
   : shape_(shape_)                    
   , strides_(compute_strides(shape_)) 
-  , data(std::move(data_))           
+  , data(move(data_))           
 {
     size_t expected = 1;
     for (auto d : shape_) expected *= d;
@@ -37,11 +37,11 @@ size_t Tensor::size() const {
     return data.size();
 }
 
-const std::vector<size_t>& Tensor::shape() const {
+const vector<size_t>& Tensor::shape() const {
     return shape_;
 }
 
-size_t Tensor::offset(const std::vector<size_t>& idx) const {
+size_t Tensor::offset(const vector<size_t>& idx) const {
     assert(idx.size() == shape_.size());
     size_t off = 0;
     for (size_t k = 0; k < idx.size(); ++k) {
@@ -51,11 +51,11 @@ size_t Tensor::offset(const std::vector<size_t>& idx) const {
     return off;
 }
 
-float& Tensor::at(const std::vector<size_t>& idx) {
+float& Tensor::at(const vector<size_t>& idx) {
     return data[offset(idx)];
 }
 
-const float& Tensor::at(const std::vector<size_t>& idx) const {
+const float& Tensor::at(const vector<size_t>& idx) const {
     return data[offset(idx)];
 }
 
@@ -79,13 +79,13 @@ float Tensor::scalar_value() const {
 Tensor Tensor::transpose() const {
     assert(shape_.size() == 2);
     size_t rows = shape_[0], cols = shape_[1];
-    std::vector<float> new_data(data.size());
+    vector<float> new_data(data.size());
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
             new_data[j*rows + i] = at(i,j);
         }
     }
-    return Tensor(std::move(new_data), {cols, rows});
+    return Tensor(move(new_data), {cols, rows});
 }
 
 Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
@@ -94,7 +94,7 @@ Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
     assert(xs.size()==2 && ys.size()==2 && xs[1]==ys[0]);
     size_t l = xs[0], m = xs[1], n = ys[1];
 
-    std::vector<float> out(l * n);
+    vector<float> out(l * n);
     for (size_t i = 0; i < l; ++i) {
         for (size_t j = 0; j < n; ++j) {
             float sum = 0.0f;
@@ -104,52 +104,118 @@ Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
             out[i * n + j] = sum;
         }
     }
-    return Tensor(std::move(out), {l, n});
+    return Tensor(move(out), {l, n});
 }
 
-std::vector<size_t> Tensor::broadcast_shape(const std::vector<size_t>& a,
-                                            const std::vector<size_t>& b) {
-    size_t na = a.size(), nb = b.size(), nr = std::max(na, nb);
-    std::vector<size_t> result(nr);
+// ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---
+vector<size_t> Tensor::broadcast_shape(const vector<size_t>& a,
+                                            const vector<size_t>& b) {
+    size_t na = a.size(), nb = b.size(), nr = max(na, nb);
+    vector<size_t> result(nr);
     for (size_t i = 0; i < nr; ++i) {
         size_t da = (i < nr - na ? 1 : a[i - (nr - na)]);
         size_t db = (i < nr - nb ? 1 : b[i - (nr - nb)]);
         if      (da == db)         result[i] = da;
         else if (da == 1)          result[i] = db;
         else if (db == 1)          result[i] = da;
-        else throw std::invalid_argument("Incompatible broadcast shapes");
+        else throw invalid_argument("Incompatible broadcast shapes");
     }
     return result;
 }
 
 Tensor Tensor::broadcast_to(const Tensor& t,
-                            const std::vector<size_t>& target_shape) {
+                            const vector<size_t>& target_shape) {
     auto src_shape = t.shape();
     size_t nd = target_shape.size();
-    std::vector<size_t> tstrides(nd, 1);
+    vector<size_t> tstrides(nd, 1);
     for (int i = (int)nd - 2; i >= 0; --i)
         tstrides[i] = tstrides[i+1] * target_shape[i+1];
 
     size_t total = 1;
     for (auto d : target_shape) total *= d;
-    std::vector<float> data2(total);
+    vector<float> data2(total);
 
     size_t ns = src_shape.size();
     for (size_t idx = 0; idx < total; ++idx) {
-        std::vector<size_t> mid(nd);
+        vector<size_t> mid(nd);
         size_t tmp = idx;
         for (size_t i = 0; i < nd; ++i) {
             mid[i] = tmp / tstrides[i];
             tmp    = tmp % tstrides[i];
         }
-        std::vector<size_t> src_idx(ns);
+        vector<size_t> src_idx(ns);
         size_t offset = nd - ns;
         for (size_t i = 0; i < ns; ++i) {
             src_idx[i] = (src_shape[i] == 1 ? 0 : mid[i + offset]);
         }
         data2[idx] = t.at(src_idx);
     }
-    return Tensor(std::move(data2), target_shape);
+    return Tensor(move(data2), target_shape);
+}
+
+Tensor Tensor::sum_across_axis(int axis) const{
+    const auto& S = shape_;
+    size_t N = S.size();
+    assert(axis < N);
+
+    vector<size_t> new_shape;
+    new_shape.reserve(N-1);
+    for (size_t i = 0; i < N; ++i) {
+        if (i != axis) new_shape.push_back(S[i]);
+    }
+    auto new_strides = compute_strides(new_shape);
+
+    size_t new_size = 1;
+    for (auto d : new_shape) new_size *= d;
+    vector<float> new_data(new_size, 0.0f);
+
+    for (size_t flat = 0; flat < data.size(); ++flat) {
+        size_t rem = flat;
+        vector<size_t> idx(N);
+        for (size_t i = 0; i < N; ++i) {
+            idx[i] = rem / strides_[i];
+            rem    = rem % strides_[i];
+        }
+        vector<size_t> ridx;
+        ridx.reserve(N-1);
+        for (size_t i = 0; i < N; ++i) {
+            if (i != axis) ridx.push_back(idx[i]);
+        }
+        size_t new_flat = 0;
+        for (size_t i = 0; i < ridx.size(); ++i) {
+            new_flat += ridx[i] * new_strides[i];
+        }
+        new_data[new_flat] += data[flat];
+    }
+
+    return Tensor(move(new_data), new_shape);
+}
+
+Tensor Tensor::fit_gradient_shape(const Tensor& grad, const vector<size_t>& target_shape) {
+    vector<size_t> gradient_shape = grad.shape();
+    vector<int> sum_across_axes;
+   
+    int grad_size = gradient_shape.size();
+    int target_size = target_shape.size();
+    // assuming gradient shape is a lot bigger, we wanna basically collapse any extra dimensions assuming we broadcasted from target shape
+    for (int i = 0; i < grad_size; i++) {
+        sum_across_axes.push_back(i);
+    }
+
+    // sum across all of these dimensions
+    for (int i = 0; i < target_size; i++) {
+        int dim_i = grad_size-target_size+i;
+        if (target_shape[i] == 1 && gradient_shape[dim_i] > 1) {
+            sum_across_axes.push_back(dim_i);
+        }
+    }
+
+    sort(sum_across_axes.rbegin(), sum_across_axes.rend());
+    Tensor result = grad;
+    for (int axis: sum_across_axes) {
+        result = result.sum_across_axis(axis);
+    }
+    return result;
 }
 
 void Tensor::print() {
@@ -157,14 +223,14 @@ void Tensor::print() {
         size_t rows = shape_[0], cols = shape_[1];
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
-                std::cout << at(i,j) << (j+1==cols ? "" : " ");
+                cout << at(i,j) << (j+1==cols ? "" : " ");
             }
-            std::cout << "\n";
+            cout << "\n";
         }
     } else {
         for (size_t i = 0; i < data.size(); ++i) {
-            std::cout << data[i] << (i+1==data.size() ? "" : " ");
+            cout << data[i] << (i+1==data.size() ? "" : " ");
         }
-        std::cout << "\n";
+        cout << "\n";
     }
 }
