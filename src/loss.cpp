@@ -5,63 +5,143 @@
 using namespace std;
 
 
-CrossEntropyLoss::CrossEntropyLoss(ValuePtr tgt, ValuePtr pr):
-    target(move(tgt)), pred(move(pr)), eps(numeric_limits<float>::epsilon())
+CrossEntropyLoss::CrossEntropyLoss(ValuePtr tgt, ValuePtr pr, size_t n_classes):
+    target(move(tgt)), pred(move(pr)), eps(numeric_limits<float>::epsilon()), n_classes(n_classes)
 {}
 
 float CrossEntropyLoss::grad_calc_local() const {
-    float t = target->get_val();
-    float p = pred->get_val();
-    return (-t / (p + eps)) + ((1 - t) / (1 - p + eps));
+    if (n_classes == 2) {
+        // Binary case - keep original logic
+        float t = target->get_val();
+        float p = pred->get_val();
+        return (-t / (p + eps)) + ((1 - t) / (1 - p + eps));
+    } else {
+        // Multi-class case - this is just for compatibility, real computation is in forward()
+        return 0.0f; // Not used in multi-class case
+    }
 }
 
 ValuePtr CrossEntropyLoss::forward() {
-    const Tensor& target_tensor = target->get_tensor();
-    const Tensor& pred_tensor = pred->get_tensor();
-    
-    float t, p;
-    if (target_tensor.is_scalar()) {
-        t = target_tensor.scalar_value();
-    } else {
-        t = target_tensor.data[0];  
-    }
-    
-    if (pred_tensor.is_scalar()) {
-        p = pred_tensor.scalar_value();
-    } else {
-        p = pred_tensor.data[0]; 
-    }
-    
-    float loss_val = -(t * log(p + eps) + (1 - t) * log(1 - p + eps));
-    auto loss_node = Value::create(loss_val, "bce");
-    
-    ValuePtr T = target, P = pred, L = loss_node;
-    float local_eps = eps;
-    
-    loss_node->_backward = [T, P, L, local_eps]() {
-        const Tensor& target_tensor = T->get_tensor();
-        const Tensor& pred_tensor = P->get_tensor();
-        const Tensor& loss_grad = L->get_grad();
+    if (n_classes == 2) {
+        // Original binary cross-entropy implementation
+        const Tensor& target_tensor = target->get_tensor();
+        const Tensor& pred_tensor = pred->get_tensor();
         
-        float t = target_tensor.is_scalar() ? target_tensor.scalar_value(): target_tensor.data[0];
-        float p = pred_tensor.is_scalar() ? pred_tensor.scalar_value(): pred_tensor.data[0];
-        float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value(): loss_grad.data[0];
-        
-        float grad_val = ((-t / (p + local_eps)) + ((1 - t) / (1 - p + local_eps))) * loss_grad_val;
-        
-        if (pred_tensor.is_scalar()) {
-            P->add_grad(Tensor(grad_val));
+        float t, p;
+        if (target_tensor.is_scalar()) {
+            t = target_tensor.scalar_value();
         } else {
-            Tensor grad_tensor = Tensor::zeros(pred_tensor.shape());
-            grad_tensor.data[0] = grad_val;
-            P->add_grad(grad_tensor);
+            t = target_tensor.data[0];  
         }
         
-    };
+        if (pred_tensor.is_scalar()) {
+            p = pred_tensor.scalar_value();
+        } else {
+            p = pred_tensor.data[0]; 
+        }
+        
+        float loss_val = -(t * log(p + eps) + (1 - t) * log(1 - p + eps));
+        auto loss_node = Value::create(loss_val, "bce");
+        
+        ValuePtr T = target, P = pred, L = loss_node;
+        float local_eps = eps;
+        
+        loss_node->_backward = [T, P, L, local_eps]() {
+            const Tensor& target_tensor = T->get_tensor();
+            const Tensor& pred_tensor = P->get_tensor();
+            const Tensor& loss_grad = L->get_grad();
+            
+            float t = target_tensor.is_scalar() ? target_tensor.scalar_value(): target_tensor.data[0];
+            float p = pred_tensor.is_scalar() ? pred_tensor.scalar_value(): pred_tensor.data[0];
+            float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value(): loss_grad.data[0];
+            
+            float grad_val = ((-t / (p + local_eps)) + ((1 - t) / (1 - p + local_eps))) * loss_grad_val;
+            
+            if (pred_tensor.is_scalar()) {
+                P->add_grad(Tensor(grad_val));
+            } else {
+                Tensor grad_tensor = Tensor::zeros(pred_tensor.shape());
+                grad_tensor.data[0] = grad_val;
+                P->add_grad(grad_tensor);
+            }
+        };
 
-    loss_node->set_prev({target, pred});
-    return loss_node;
+        loss_node->set_prev({target, pred});
+        return loss_node;
+        
+    } else {
+        // Multi-class cross-entropy with softmax
+        const Tensor& logits_tensor = pred->get_tensor();
+        const Tensor& target_tensor = target->get_tensor();
+        
+        // Apply softmax to logits for numerical stability
+        // First, subtract max for numerical stability
+        float max_val = *std::max_element(logits_tensor.data.begin(), logits_tensor.data.end());
+        
+        // Compute softmax
+        vector<float> softmax_vals(logits_tensor.data.size());
+        float sum_exp = 0.0f;
+        
+        for (size_t i = 0; i < logits_tensor.data.size(); ++i) {
+            softmax_vals[i] = std::exp(logits_tensor.data[i] - max_val);
+            sum_exp += softmax_vals[i];
+        }
+        
+        // Normalize
+        for (size_t i = 0; i < softmax_vals.size(); ++i) {
+            softmax_vals[i] /= sum_exp;
+        }
+        
+        // Compute cross-entropy loss: -sum(target * log(softmax + eps))
+        float loss_val = 0.0f;
+        for (size_t i = 0; i < target_tensor.data.size(); ++i) {
+            if (target_tensor.data[i] > 0.0f) {
+                loss_val -= target_tensor.data[i] * std::log(softmax_vals[i] + eps);
+            }
+        }
+        
+        auto loss_node = Value::create(loss_val, "cross_entropy");
+        
+        // Set up backward pass
+        ValuePtr T = target, P = pred, L = loss_node;
+        float local_eps = eps;
+        
+        loss_node->_backward = [T, P, L, local_eps]() {
+            const Tensor& logits_tensor = P->get_tensor();
+            const Tensor& target_tensor = T->get_tensor();
+            const Tensor& loss_grad = L->get_grad();
+            
+            // Recompute softmax for gradient calculation
+            float max_val = *std::max_element(logits_tensor.data.begin(), logits_tensor.data.end());
+            vector<float> softmax_vals(logits_tensor.data.size());
+            float sum_exp = 0.0f;
+            
+            for (size_t i = 0; i < logits_tensor.data.size(); ++i) {
+                softmax_vals[i] = std::exp(logits_tensor.data[i] - max_val);
+                sum_exp += softmax_vals[i];
+            }
+            
+            for (size_t i = 0; i < softmax_vals.size(); ++i) {
+                softmax_vals[i] /= sum_exp;
+            }
+            
+            // Gradient of cross-entropy with softmax: softmax - target
+            Tensor pred_grad = Tensor::zeros(logits_tensor.shape());
+            float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value() : loss_grad.data[0];
+            
+            for (size_t i = 0; i < softmax_vals.size(); ++i) {
+                pred_grad.data[i] = (softmax_vals[i] - target_tensor.data[i]) * loss_grad_val;
+            }
+            
+            P->add_grad(pred_grad);
+        };
+        
+        loss_node->set_prev({target, pred});
+        return loss_node;
+    }
 }
+
+
 
 
 MSELoss::MSELoss(ValuePtr tgt, ValuePtr pr):

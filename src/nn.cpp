@@ -40,7 +40,8 @@ ValuePtr MLP::forward(ValuePtr x) {
     auto a2 = relu2.forward();
     
     auto z3 = Value::add(Value::matmul(a2, W3), b3);
-    return sigmoid(z3);
+    // return sigmoid(z3);
+    return z3;
 }
 
 

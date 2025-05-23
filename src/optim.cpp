@@ -37,8 +37,8 @@ void AdamW::step() {
         
         m_t = Tensor(m_val);
         v_t = Tensor(v_val);
-    } else {
 
+    } else {
         m_t = m_t * Tensor(b1) + grad * Tensor(1 - b1);
         Tensor grad_squared = grad * grad; 
         v_t = v_t * Tensor(b2) + grad_squared * Tensor(1 - b2);
@@ -50,18 +50,18 @@ void AdamW::step() {
     float bias_correction2 = 1.0f - std::pow(b2, t);
     
     if (grad.is_scalar()) {
-        float m_hat = m_t.scalar_value() / bias_correction1;
-        float v_hat = v_t.scalar_value() / bias_correction2;
+        float m_hat = m_t.scalar_value()/bias_correction1;
+        float v_hat = v_t.scalar_value()/bias_correction2;
         
-        float adam_term = m_hat / (std::sqrt(v_hat) + epsilon);
+        float adam_term = m_hat/(std::sqrt(v_hat) + epsilon);
         float weight_decay_term = weight_decay * param_tensor.scalar_value();
         float update = adam_term + weight_decay_term;
         
         float new_val = param_tensor.scalar_value() - lr * update;
         param->set_val(new_val);
     } else {
-        Tensor m_hat = m_t * Tensor(1.0f / bias_correction1);
-        Tensor v_hat = v_t * Tensor(1.0f / bias_correction2);
+        Tensor m_hat = m_t*Tensor(1.0f/bias_correction1);
+        Tensor v_hat = v_t*Tensor(1.0f/bias_correction2);
         
         Tensor v_hat_sqrt = v_hat.apply([this](float x) { 
             return std::sqrt(x) + epsilon; 

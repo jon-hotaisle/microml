@@ -10,9 +10,10 @@ class CrossEntropyLoss {
         ValuePtr target;
         ValuePtr pred;
         float eps;
+        size_t n_classes;
 
     public:
-        CrossEntropyLoss(ValuePtr target, ValuePtr pred);
+        CrossEntropyLoss(ValuePtr target, ValuePtr pred, size_t n_classes = 2);
         ValuePtr forward();
         float grad_calc_local() const;
 };
