@@ -264,7 +264,6 @@ Tensor Tensor::fit_gradient_shape(const Tensor& grad, const vector<size_t>& targ
 }
 
 
-// ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---
 vector<size_t> Tensor::broadcast_shape(const vector<size_t>& a,
                                             const vector<size_t>& b) {
     size_t na = a.size(), nb = b.size(), nr = max(na, nb);
@@ -275,7 +274,7 @@ vector<size_t> Tensor::broadcast_shape(const vector<size_t>& a,
         if      (da == db)         result[i] = da;
         else if (da == 1)          result[i] = db;
         else if (db == 1)          result[i] = da;
-        else throw invalid_argument("Incompatible broadcast shapes");
+        else throw invalid_argument("shape error in broadcasting");
     }
     return result;
 }
