@@ -18,49 +18,47 @@ float CrossEntropyLoss::grad_calc_local() const {
 }
 
 ValuePtr CrossEntropyLoss::forward() {
+    const Tensor& target_tensor = target->get_tensor();
+    const Tensor& pred_tensor = pred->get_tensor();
+    
     float t, p;
-    
-    if (target->get_tensor().is_scalar()) {
-        t = target->get_val();
+    if (target_tensor.is_scalar()) {
+        t = target_tensor.scalar_value();
     } else {
-        t = target->get_tensor().data[0];
+        t = target_tensor.data[0];  
     }
     
-    if (pred->get_tensor().is_scalar()) {
-        p = pred->get_val();
+    if (pred_tensor.is_scalar()) {
+        p = pred_tensor.scalar_value();
     } else {
-        p = pred->get_tensor().data[0];
+        p = pred_tensor.data[0]; 
     }
     
-    float loss_val = - (t * log(p + eps) + (1 - t) * log(1 - p + eps));
+    float loss_val = -(t * log(p + eps) + (1 - t) * log(1 - p + eps));
     auto loss_node = Value::create(loss_val, "bce");
-
+    
     ValuePtr T = target, P = pred, L = loss_node;
     float local_eps = eps;
+    
     loss_node->_backward = [T, P, L, local_eps]() {
-        float t, p;
+        const Tensor& target_tensor = T->get_tensor();
+        const Tensor& pred_tensor = P->get_tensor();
+        const Tensor& loss_grad = L->get_grad();
         
-        if (T->get_tensor().is_scalar()) {
-            t = T->get_val();
-        } else {
-            t = T->get_tensor().data[0];
-        }
+        float t = target_tensor.is_scalar() ? target_tensor.scalar_value() : target_tensor.data[0];
+        float p = pred_tensor.is_scalar() ? pred_tensor.scalar_value() : pred_tensor.data[0];
+        float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value() : loss_grad.data[0];
         
-        if (P->get_tensor().is_scalar()) {
-            p = P->get_val();
-        } else {
-            p = P->get_tensor().data[0];
-        }
+        float grad_val = ((-t / (p + local_eps)) + ((1 - t) / (1 - p + local_eps))) * loss_grad_val;
         
-        float g = (-t / (p + local_eps)) + ((1 - t) / (1 - p + local_eps));
-
-        if (P->get_tensor().is_scalar()) {
-            P->add_grad(Tensor(g) * L->get_grad());
+        if (pred_tensor.is_scalar()) {
+            P->add_grad(Tensor(grad_val));
         } else {
-            Tensor grad_tensor = Tensor::zeros(P->get_tensor().shape());
-            grad_tensor.data[0] = g * L->get_grad().scalar_value();
+            Tensor grad_tensor = Tensor::zeros(pred_tensor.shape());
+            grad_tensor.data[0] = grad_val;
             P->add_grad(grad_tensor);
         }
+        
     };
 
     loss_node->set_prev({target, pred});
@@ -74,26 +72,60 @@ MSELoss::MSELoss(ValuePtr tgt, ValuePtr pr)
 {}
 
 float MSELoss::grad_calc_local() const {
-    float t = target->get_val();
-    float p = pred->get_val();
+    const Tensor& target_tensor = target->get_tensor();
+    const Tensor& pred_tensor = pred->get_tensor();
+    
+    float t = target_tensor.is_scalar() ? target_tensor.scalar_value() : target_tensor.data[0];
+    float p = pred_tensor.is_scalar() ? pred_tensor.scalar_value() : pred_tensor.data[0];
+    
     return 2.0f * (p - t);
 }
 
 ValuePtr MSELoss::forward() {
-    float t = target->get_val();
-    float p = pred->get_val();
+    const Tensor& target_tensor = target->get_tensor();
+    const Tensor& pred_tensor = pred->get_tensor();
+    
+    float t, p;
+    if (target_tensor.is_scalar()) {
+        t = target_tensor.scalar_value();
+    } else {
+        t = target_tensor.data[0]; 
+    }
+    
+    if (pred_tensor.is_scalar()) {
+        p = pred_tensor.scalar_value();
+    } else {
+        p = pred_tensor.data[0];  
+    }
+    
     float loss_val = (p - t) * (p - t);
     auto loss_node = Value::create(loss_val, "mse");
 
     ValuePtr T = target, P = pred, L = loss_node;
     loss_node->_backward = [T, P, L]() {
-        float g = 2.0f * (P->get_val() - T->get_val());
-        P->add_grad(Tensor(g) * L->get_grad());
+        const Tensor& target_tensor = T->get_tensor();
+        const Tensor& pred_tensor = P->get_tensor();
+        const Tensor& loss_grad = L->get_grad();
+        
+        float t = target_tensor.is_scalar() ? target_tensor.scalar_value() : target_tensor.data[0];
+        float p = pred_tensor.is_scalar() ? pred_tensor.scalar_value() : pred_tensor.data[0];
+        float loss_grad_val = loss_grad.is_scalar() ? loss_grad.scalar_value() : loss_grad.data[0];
+        
+        float grad_val = 2.0f * (p - t) * loss_grad_val;
+        
+        if (pred_tensor.is_scalar()) {
+            P->add_grad(Tensor(grad_val));
+        } else {
+            Tensor grad_tensor = Tensor::zeros(pred_tensor.shape());
+            grad_tensor.data[0] = grad_val;
+            P->add_grad(grad_tensor);
+        }
     };
 
     loss_node->set_prev({target, pred});
     return loss_node;
 }
+
 
 ReLU::ReLU(ValuePtr inp)
   : input(move(inp))

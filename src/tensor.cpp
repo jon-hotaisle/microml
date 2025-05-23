@@ -18,21 +18,16 @@ vector<size_t> Tensor::compute_strides(const vector<size_t>& shape) {
     return s;
 }
 
-Tensor::Tensor(vector<float> data_, vector<size_t> shape_)
-  : shape_(shape_)                    
-  , strides_(compute_strides(shape_)) 
-  , data(move(data_))           
-{
+Tensor::Tensor(vector<float> data_, vector<size_t> shape_): 
+    shape_(shape_), strides_(compute_strides(shape_)), data(move(data_)) {
     size_t expected = 1;
     for (auto d : shape_) expected *= d;
     assert(expected == data.size());
 }
 
 
-Tensor::Tensor(float x)
-  : data({x})
-  , strides_({})
-  , shape_({})
+Tensor::Tensor(float x): 
+    data({x}), strides_({}), shape_({})
 {}
 
 size_t Tensor::size() const {
@@ -141,11 +136,28 @@ Tensor Tensor::randn(vector<size_t> shape, float mean, float std) {
     return Tensor(move(data), shape);
 }
 
-// Fixed: Add Tensor:: scope and remove duplicate 'static'
 Tensor Tensor::zeros(vector<size_t> shape) {
     size_t total_size = 1;
     for (auto dim : shape) total_size *= dim;
     return Tensor(vector<float>(total_size, 0.0f), shape);
+}
+
+
+void Tensor::print() {
+    if (shape_.size() == 2) {
+        size_t rows = shape_[0], cols = shape_[1];
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                cout << at(i,j) << (j+1==cols ? "" : " ");
+            }
+            cout << "\n";
+        }
+    } else {
+        for (size_t i = 0; i < data.size(); ++i) {
+            cout << data[i] << (i+1==data.size() ? "" : " ");
+        }
+        cout << "\n";
+    }
 }
 
 // ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---
@@ -250,19 +262,3 @@ Tensor Tensor::fit_gradient_shape(const Tensor& grad, const vector<size_t>& targ
     return grad;
 }
 
-void Tensor::print() {
-    if (shape_.size() == 2) {
-        size_t rows = shape_[0], cols = shape_[1];
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                cout << at(i,j) << (j+1==cols ? "" : " ");
-            }
-            cout << "\n";
-        }
-    } else {
-        for (size_t i = 0; i < data.size(); ++i) {
-            cout << data[i] << (i+1==data.size() ? "" : " ");
-        }
-        cout << "\n";
-    }
-}

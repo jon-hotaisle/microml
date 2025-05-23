@@ -1,4 +1,4 @@
-#pragma once  
+#pragma once
 
 #include <vector>
 #include <unordered_map>
@@ -18,22 +18,19 @@ class AdamW {
         float b2;
         float weight_decay;
         float epsilon;
-        float m_t;
-        float v_t;
+        Tensor m_t; 
+        Tensor v_t; 
         int t;
         ValuePtr param;
+        bool initialized;  
+        
+        void initialize_momentum_tensors();
     
     public:
-    
-        AdamW(float lr, ValuePtr param, float b1 = 0.9, float b2 = 0.999, float epsilon = 1e-8, float weight_decay=0.01) {
-                this->lr = lr;
-                this->b1 = b1;
-                this->b2 = b2;
-                this->param = param;
-                this->m_t = 0;
-                this->v_t = 0;
-                this->t = 0;
-            }
+        AdamW(float lr, ValuePtr param, float b1 = 0.9, float b2 = 0.999, 
+              float epsilon = 1e-8, float weight_decay = 0.01) 
+            : lr(lr), b1(b1), b2(b2), weight_decay(weight_decay), 
+              epsilon(epsilon), param(param), t(0), initialized(false) {}
 
         void step();
 };

@@ -4,7 +4,7 @@
 #include "optim.hpp"
 #include <random>
 
-ValuePtr TensorMLP::sigmoid(ValuePtr x) {
+ValuePtr MLP::sigmoid(ValuePtr x) {
 
     Tensor input_tensor = x->get_tensor();
     Tensor output_tensor = input_tensor.sigmoid(); 
@@ -30,7 +30,7 @@ ValuePtr TensorMLP::sigmoid(ValuePtr x) {
     return node;
 }
 
-ValuePtr TensorMLP::forward(ValuePtr x) {
+ValuePtr MLP::forward(ValuePtr x) {
     auto z1 = Value::add(Value::matmul(x, W1), b1);
     ReLU relu1(z1);
     auto a1 = relu1.forward();
@@ -44,11 +44,11 @@ ValuePtr TensorMLP::forward(ValuePtr x) {
 }
 
 
-vector<ValuePtr> TensorMLP::parameters() {
+vector<ValuePtr> MLP::parameters() {
     return {W1, b1, W2, b2, W3, b3};
 }
 
-void TensorMLP::zero_grad() {
+void MLP::zero_grad() {
     for (auto& param : parameters()) {
         param->set_tensor_grad(Tensor::zeros(param->get_tensor().shape()));
     }

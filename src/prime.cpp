@@ -182,7 +182,7 @@ void Value::backward(bool retain_graph = false) {
     topo_sort(topo, visited);
 
     if (!retain_graph || (grad.is_scalar() && grad.scalar_value() == 0.0f)) {
-        grad = Tensor(1.0f);
+        grad = Tensor({1.0f}, {1, 1});;
     }
 
     for (auto next = topo.rbegin(); next != topo.rend(); ++next) {
@@ -202,6 +202,10 @@ void Value::topo_sort(vector<ValuePtr>& topo, unordered_set<Value*>& visited) {
         p->topo_sort(topo, visited);
     }
     topo.push_back(shared_from_this());
+}
+
+void Value::set_tensor(const Tensor& t) {
+    data = t;
 }
 
 void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
