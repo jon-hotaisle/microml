@@ -6,8 +6,6 @@ A from-scratch C++ neural network framework implementing automatic differentiati
 
 MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies.
 
-**This is not production code** – it's an educational project focused on understanding how modern ML frameworks work under the hood, designed to be auditable, compact, and dependency-light.
-
 ## Architecture & Design
 
 ```
