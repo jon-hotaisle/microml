@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <sstream>
 
 using namespace std;
 
@@ -209,18 +210,39 @@ void Value::set_tensor(const Tensor& t) {
 }
 
 void Value::dump_to_dot(const vector<ValuePtr>& topo, const string& filename) {
+    auto tensor_to_string = [](const Tensor& t) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < t.data.size(); ++i) {
+            oss << t.data[i];
+            if (i + 1 < t.data.size()) oss << ",";
+        }
+        oss << "]";
+        return oss.str();
+    };
+
+
     ofstream out(filename);
     out << "digraph ComputationalGraph {\n";
     for (auto& node : topo) {
+        const Tensor& val_t  = node->get_tensor();
+        const Tensor& grad_t = node->get_tensor_grad();
+        std::string val_str  = tensor_to_string(val_t);
+        std::string grad_str = tensor_to_string(grad_t);
+
         out << "  node" << node->id
-            << " [label=\"" << node->op << "\\nval=" << node->get_val()
-            << "\\ngrad=" << node->get_grad().scalar_value() << "\"];\n";
+            << " [label=\"" << node->op
+            << "\\nval="  << val_str
+            << "\\ngrad=" << grad_str << "\"];\n";
+
         for (auto& parent : node->prev) {
-            out << "  node" << parent->id << " -> node" << node->id << ";\n";
+            out << "  node" << parent->id
+                << " -> node" << node->id << ";\n";
         }
     }
     out << "}\n";
     out.close();
+
 }
 
 void Value::visualize(const vector<ValuePtr>& topo, const string& base_path) {
