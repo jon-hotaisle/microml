@@ -125,7 +125,7 @@ microml/
 ## Dependencies
 
 - **xsimd**: SIMD-accelerated tensor operations (AVX2/FMA)
-- **C++17**: Modern C++ features for clean memory management
+- **C++20**: Modern C++ features for clean memory management
 - **Graphviz**: Optional, for computational graph visualization
 
 ## Examples & Results
@@ -179,7 +179,7 @@ git clone --recursive https://github.com/your-username/microml.git
 cd microml
 
 # Build with optimizations
-g++ -std=c++17 -O3 -march=native -mavx2 -mfma \
+g++ -std=c++20 -O3 -march=native -mavx2 -mfma \
     -Ixsimd/include \
     src/*.cpp -o microml
 
