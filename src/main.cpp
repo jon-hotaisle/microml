@@ -1,7 +1,12 @@
 #include "prime.hpp"
 #include "loss.hpp"
+#include "nn.hpp"
 #include "optim.hpp"
 using namespace std;
+
+bool almost_eq(float a, float b, float tol=1e-6f) {
+    return std::fabs(a - b) < tol;
+}
 
 int main() {
     
@@ -295,5 +300,46 @@ int main() {
     
     // cout << "\n=== All broadcasting tests completed! ===" << endl;
     // return 0;
+    
+    TensorMLP mlp(2, 3, 2, 1);
+    auto x0 = Value::create(Tensor::zeros({1, 2}), "x0");  // zero input :contentReference[oaicite:3]{index=3}
+    auto y0 = mlp.forward(x0);
+    
+    // check shape == [1,1]
+    const auto& out0 = y0->get_tensor();
+    auto shape0 = out0.shape();
+    assert(shape0.size() == 2);
+    assert(shape0[0] == 1 && shape0[1] == 1);
+    
+    // check value == 0.5
+    float v0 = out0.at(0,0);
+    assert(almost_eq(v0, 0.5f));
+    std::cout << "[PASS] forward(zero) == 0.5\n";
+    
+    // 2) Backward pass on a toy example
+    auto x1 = Value::create(Tensor({1.0f, -1.0f}, {1,2}), "x1");
+    auto y_true = Value::create(Tensor({1.0f}, {1,1}), "y_true");
+    auto y_pred = mlp.forward(x1);
+    
+    CrossEntropyLoss loss_fn(y_true, y_pred);
+    auto loss = loss_fn.forward();
+    
+    // loss must be > 0
+    float loss_val = loss->get_val();
+    assert(loss_val > 0.0f);
+    
+    // run backward
+    loss->backward(false);
+    
+    // every parameter’s grad-shape should match its value-shape
+    for (auto& p : mlp.parameters()) {
+        auto ps = p->get_tensor().shape();
+        auto gs = p->get_tensor_grad().shape();
+        assert(ps == gs);
+    }
+    std::cout << "[PASS] backward ran and grad shapes match\n";
+    
+    std::cout << "=== ALL MLP TESTS PASSED ===\n";
+    return 0;
 
 }

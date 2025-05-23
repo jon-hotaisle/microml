@@ -4,6 +4,8 @@
 #include <algorithm>   
 #include <stdexcept> 
 #include <cmath>
+#include <functional>
+#include <random>
 
 using namespace std;
 
@@ -105,6 +107,45 @@ Tensor Tensor::matmul(const Tensor& x, const Tensor& y) {
         }
     }
     return Tensor(move(out), {l, n});
+}
+
+Tensor Tensor::apply(std::function<float(float)> func) const {
+    vector<float> result_data;
+    result_data.reserve(data.size());
+    for (float val : data) {
+        result_data.push_back(func(val));
+    }
+    return Tensor(move(result_data), shape_);
+}
+
+Tensor Tensor::relu() const {
+    return apply([](float x) { return max(0.0f, x); });
+}
+
+Tensor Tensor::sigmoid() const {
+    return apply([](float x) { return 1.0f / (1.0f + exp(-x)); });
+}
+
+Tensor Tensor::randn(vector<size_t> shape, float mean, float std) {
+    size_t total_size = 1;
+    for (auto dim : shape) total_size *= dim;
+    
+    static random_device rd;
+    static mt19937 gen(rd());
+    normal_distribution<float> dis(mean, std);
+    
+    vector<float> data(total_size);
+    for (auto& val : data) {
+        val = dis(gen);
+    }
+    return Tensor(move(data), shape);
+}
+
+// Fixed: Add Tensor:: scope and remove duplicate 'static'
+Tensor Tensor::zeros(vector<size_t> shape) {
+    size_t total_size = 1;
+    for (auto dim : shape) total_size *= dim;
+    return Tensor(vector<float>(total_size, 0.0f), shape);
 }
 
 // ---- NGL I chatgpt'd these 2 broadcasting thangs... will come back to understand a bit more deeply cause im lost in this broadcasting bs ---

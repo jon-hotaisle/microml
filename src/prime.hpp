@@ -45,6 +45,11 @@ public:
 
     void set_val(float val);
 
+    const Tensor& get_tensor() const;
+    const Tensor& get_tensor_grad() const;
+    void set_tensor_grad(const Tensor& g);
+    void add_tensor_grad(const Tensor& g);
+
     // float get_grad();
     // void set_grad(float g);
     // void add_grad(float g);

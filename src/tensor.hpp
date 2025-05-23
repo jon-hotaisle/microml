@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <utility>
 #include <cassert>
+#include <functional>
 using namespace std;
 
 
@@ -44,6 +45,12 @@ public:
     static Tensor fit_gradient_shape(const Tensor& grad, const vector<size_t>& target_shape);
     Tensor sum_across_axis(int axis) const;
     void print();
+
+    static Tensor zeros(vector<size_t> shape);
+    static Tensor randn(vector<size_t> shape, float mean = 0.0f, float std = 1.0f);
+    Tensor apply(std::function<float(float)> func) const;
+    Tensor relu() const;
+    Tensor sigmoid() const;
 };
 
 // elementwise operators w. broadcasting

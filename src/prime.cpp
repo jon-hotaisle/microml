@@ -69,6 +69,20 @@ void Value::set_grad(float g) {
     grad = Tensor(g);
 }
 
+const Tensor& Value::get_tensor() const {
+    return data;
+}
+const Tensor& Value::get_tensor_grad() const {
+    return grad;
+}
+void Value::set_tensor_grad(const Tensor& g) {
+    grad = g;
+}
+void Value::add_tensor_grad(const Tensor& g) {
+    grad = grad + g; 
+}
+
+
 void Value::add_grad(const Tensor &g) {
     grad = grad + g;
 }
@@ -167,7 +181,7 @@ void Value::backward(bool retain_graph = false) {
     unordered_set<Value*> visited;
     topo_sort(topo, visited);
 
-    if (!retain_graph || grad.is_scalar() && grad.scalar_value() == 0.0f) {
+    if (!retain_graph || (grad.is_scalar() && grad.scalar_value() == 0.0f)) {
         grad = Tensor(1.0f);
     }
 

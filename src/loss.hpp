@@ -36,4 +36,5 @@ class ReLU {
         explicit ReLU(ValuePtr input);
         ValuePtr forward();
         float grad_calc_local() const;
+        Tensor grad_calc_local_tensor() const;
 };
