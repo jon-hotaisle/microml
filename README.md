@@ -228,7 +228,7 @@ Training performance comparison between SIMD-optimized and naive matrix multipli
 - **Consistent 8-9x speedup** across all training scenarios
 - SIMD optimization provides dramatic performance gains for matrix-heavy operations
 - Training time reduced from **4.7 minutes** to **32 seconds** - making experimentation much more interactive
-- Performance scales well across different problem complexities (4-feature vs 2-feature datasets)
+- Performance scales well across different problem complexities and sizes
 
 ## Limitations & Future Work
 
