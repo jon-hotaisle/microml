@@ -15,7 +15,7 @@
 
 ---
 
-MicroML is a lightweight neural network framework that demonstrates core deep learning concepts through clean C++ implementation. It features automatic differentiation with computational graphs, SIMD-optimized tensor operations, and gradient-based training algorithms - all with minimal dependencies. 
+MicroML is a lightweight neural network framework that is built with core deep learning components in C++. It features automatic differentiation with computational graph optimizations, SIMD-optimized tensor operations, and end-to-end training workflows - all with minimal dependencies. 
 
 ## Architecture & Design
 
