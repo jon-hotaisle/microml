@@ -189,7 +189,7 @@ This was an incredibly fun project to build that got me deep into the weeds of C
 
 ```bash
 # Clone with xsimd submodule for SIMD operations
-git clone --recursive https://github.com/your-username/microml.git
+git clone --recursive https://github.com/devpatelio/microml.git
 cd microml
 
 # Build with optimizations
